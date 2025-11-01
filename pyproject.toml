@@ -3,9 +3,9 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "project-name"
-authors = [{ name = "author name", email = "author@email.com" }]
-description = "Project description"
+name = "FairMLLM-Emotion-Recognition"
+authors = [{name = "Federico D'Asaro", email = "federico.dasaro@linksfoundation.com"}, {name = "Juan José Márquez Villacís", email = "juan.marquez@linksfoundation.com"}]
+description = "A project for Fairness estimation in Emotion Recognition using multimodal large language models."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
@@ -43,7 +43,7 @@ test = [
 package-dir = { "" = "src" }
 
 [tool.setuptools.dynamic]
-version = { attr = "package_name.__version__" }
+version = {attr = "mllm_emotion_classifier.__version__"}
 dependencies = {file = "requirements.txt"}
 
 [tool.ruff]
