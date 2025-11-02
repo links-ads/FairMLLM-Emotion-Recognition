@@ -96,7 +96,6 @@ def prepare_data_from_jsonl(
     num_train_data = len(train_data)
     num_valid_data = len(valid_data)
     num_test_samples = len(test_data)
-    label_map = json.load(open(label_map))
     logger.info(f'Num. training samples {num_train_data}')
     logger.info(f'Num. valid samples {num_valid_data}')
     logger.info(f'Num. test samples {num_test_samples}')
@@ -146,9 +145,11 @@ class EmoDataset(Dataset):
     def __init__(self, dataset, data_dir, meta_data_dir, fold=1, split="train"):
         super().__init__()
         self.data_dir = data_dir
-        label_map = os.path.join(meta_data_dir, dataset, 'label_map.json')
+        self.label_map = json.load(
+            open(os.path.join(meta_data_dir, dataset, 'label_map.json'))
+        )
         train_data, valid_data, test_data = prepare_data_from_jsonl(
-            dataset, meta_data_dir, label_map, fold=fold
+            dataset, meta_data_dir, self.label_map, fold=fold
         )
         if split == 'train':
             self.data_list = train_data
@@ -173,7 +174,7 @@ class EmoDataset(Dataset):
         label = data['emo']        
         return{
             "key": key,
-            "audio": audio,
+            "audio": audio.numpy(),
             "label": label,
             # other meta data can be added here
         }

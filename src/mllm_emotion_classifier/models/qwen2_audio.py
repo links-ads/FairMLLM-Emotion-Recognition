@@ -14,7 +14,15 @@ logger = logging.getLogger(__name__)
 
 class Qwen2AudioEmotionWrapper(BaseEmotionModel):
     
-    DEFAULT_PROMPT = "<|audio_bos|><|AUDIO|><|audio_eos|>What emotion is expressed in this audio? Answer with a single word emotion label."
+    # DEFAULT_PROMPT = "<|audio_bos|><|AUDIO|><|audio_eos|>What emotion is expressed in this audio? Answer with a single word emotion label."
+
+    AUDIO_PROMPT_TEMPLATE = (
+        "<|audio_bos|><|AUDIO|><|audio_eos|>"
+        "What emotion is expressed in this audio? "
+        "Answer with a single word emotion label among: {labels}."
+    )
+
+    DEFAULT_EMOTIONS = ["Happy", "Sad", "Angry", "Neutral", "Fear", "Disgust", "Surprise"]
     
     def __init__(
         self, 
@@ -25,6 +33,7 @@ class Qwen2AudioEmotionWrapper(BaseEmotionModel):
         max_new_tokens: int = 256,
         min_new_tokens: int = 1,
         do_sample: bool = False,
+        class_labels = None,
         device: str = "auto",
         **kwargs,
     ):
@@ -44,21 +53,24 @@ class Qwen2AudioEmotionWrapper(BaseEmotionModel):
             torch_dtype=self.torch_dtype
         )
         self.model.eval()
+        self.model.to(self.device)
         self.processor = AutoProcessor.from_pretrained(self.checkpoint)
         self.processor.tokenizer.padding_side = 'left'
-    
-    def collate_fn(inputs, processor):
+
+        self.class_labels = class_labels if class_labels is not None else self.DEFAULT_EMOTIONS
+
+    def collate_fn(self, inputs):
         input_audios = [_['audio'] for _ in inputs]
-        input_texts = [_['prompt'] for _ in inputs]
-        gt = [_['gt'] for _ in inputs]
-        inputs = processor(
+        input_texts = [self.AUDIO_PROMPT_TEMPLATE.format(labels=", ".join(self.class_labels)) for _ in inputs]
+        labels = [_['label'] for _ in inputs]
+        inputs = self.processor(
             text=input_texts,
-            audios=input_audios,
-            sampling_rate=processor.feature_extractor.sampling_rate,
+            audio=input_audios,
+            sampling_rate=self.processor.feature_extractor.sampling_rate,
             return_tensors="pt",
             padding=True,
         )
-        return inputs, gt
+        return inputs, labels
     
     def _decode_outputs(
         self,

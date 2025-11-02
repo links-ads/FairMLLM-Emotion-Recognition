@@ -56,3 +56,19 @@ clean:				## Clean unused files (VENV=true to also remove the virtualenv).
 	@rm -rf .tox/
 	@rm -rf docs/_build
 	@if [ "$(VENV)" != "" ]; then echo "Removing virtualenv..."; rm -rf $(PY_ENV); fi
+
+
+run_thor_80:
+	srun --ntasks 1 --cpus-per-task 4 --mem=128GB --partition=A100 --gpus=a100:1 -t 36:00:00 --pty bash
+
+run_thor_40:
+	srun --ntasks 1 --cpus-per-task 4 --mem=128GB --partition=A100 --gpus=3g.40gb:1 -t 24:00:00 --pty bash
+
+run_thor_20:
+	srun --ntasks 1 --cpus-per-task 4 --mem=64GB --partition=A100 --gpus=1g.20gb:1 -t 24:00:00 --pty bash
+
+run_baldur:
+	srun --ntasks 1 --cpus-per-task 4 --mem=8GB --partition=RTX --gpus=2080ti:1 -t 24:00:00 --pty bash
+
+start_jup:
+	jupyter notebook --no-browser --port 40005 --NotebookApp.allow_origin='*' --NotebookApp.ip='0.0.0.0'
