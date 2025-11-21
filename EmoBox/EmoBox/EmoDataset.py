@@ -34,7 +34,7 @@ def check_exists(data, data_dir, logger):
         
         if os.path.exists(audio_path):
             new_data.append(instance)
-    logger.info(f'load in {len(data)} samples, only {len(new_data)} exists in data dir {data_dir}')        
+    print(f'load in {len(data)} samples, only {len(new_data)} exists in data dir {data_dir}')        
     return new_data
 
 def replace_label(data, label_map, logger):
@@ -68,10 +68,10 @@ def prepare_data_from_jsonl(
     assert os.path.exists(test_data_path), f'test data path {test_data_path} does not exist!'
     official_valid = False
     if os.path.exists(valid_data_path):
-        logger.info(f'using official valid data in {valid_data_path}')
+        print(f'using official valid data in {valid_data_path}')
         official_valid = True
     else:
-        logger.info(f'since there is no official valid data, use random split for train valid split, with a ratio of {split_ratio}')    
+        print(f'since there is no official valid data, use random split for train valid split, with a ratio of {split_ratio}')    
 
     # load in train & test data
     train_data = []
@@ -97,12 +97,12 @@ def prepare_data_from_jsonl(
     num_train_data = len(train_data)
     num_valid_data = len(valid_data)
     num_test_samples = len(test_data)
-    logger.info(f'Num. training samples {num_train_data}')
-    logger.info(f'Num. valid samples {num_valid_data}')
-    logger.info(f'Num. test samples {num_test_samples}')
+    print(f'Num. training samples {num_train_data}')
+    print(f'Num. valid samples {num_valid_data}')
+    print(f'Num. test samples {num_test_samples}')
 
     
-    logger.info(f'Using label_map {label_map}')
+    print(f'Using label_map {label_map}')
     train_data = replace_label(train_data, label_map, logger)
     valid_data = replace_label(valid_data, label_map, logger)
     test_data = replace_label(test_data, label_map, logger)
@@ -191,4 +191,15 @@ class EmoDataset(Dataset):
             # other meta data can be added here
         }
 
-        
+if __name__ == "__main__":
+    # test code
+    meta_data_dir = 'EmoBox/data'
+    data_dir = './data/'
+    # dataset = 'emozionalmente'
+    dataset = 'iemocap'
+    fold = 1
+    test_set = EmoDataset(dataset, data_dir, meta_data_dir, fold=fold, split='test')
+    print(f'Num. training samples: {len(test_set)}')
+    for idx in range(3):
+        sample = test_set[idx]
+        print(sample['key'], sample['audio'].shape, sample['label'])

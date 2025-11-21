@@ -1,67 +1,69 @@
-# Python ML template
-A simple template to bootstrap Python machine learning projects, maintaining a standard structure.
-It should be slightly faster than starting from scratch each time.
+# FairMLLM Emotion Recognition
 
-## Getting Started
+This repository contains code and resources for fair emotion recognition using multimodal large language models (MLLMs).
 
-To use this template, follow these steps:
+## EmoBox Benchmark
 
-1. Click the "Use this template" button at the top of the repository and follow the procedure.
+This project utilizes the **EmoBox** toolkit and benchmark for speech emotion recognition evaluation. EmoBox is an out-of-the-box multilingual multi-corpus speech emotion recognition toolkit that provides standardized data processing, evaluation metrics, and benchmarks for both intra-corpus and cross-corpus settings on mainstream pre-trained foundation models.
 
-2. Clone your new repository to your local machine:
+### About EmoBox
 
-   ```bash
-   git clone https://github.com/your-username/your-repo.git
-   ```
+- **GitHub Repository**: [https://github.com/emo-box/EmoBox](https://github.com/emo-box/EmoBox)
+- **Benchmark Website**: [https://emo-box.github.io/index.html](https://emo-box.github.io/index.html)
+- **Paper**: [EmoBox: Multilingual Multi-corpus Speech Emotion Recognition Toolkit and Benchmark](https://arxiv.org/abs/2406.07162)
 
-3. Navigate to the project directory. Optional but recommended: create and activate a Python virtual environment to isolate your project's dependencies.
-E.g.:
+EmoBox includes **32 speech emotion datasets** spanning **14 distinct languages** with standardized data preparation and partitioning. The toolkit provides:
 
-   ```bash
-   cd your-repo
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows, use .venv\Scripts\activate
-   ```
-5. The template provides a simple "self-destructing" initialization script, `init.py`, that automatically provides the necessary information to generate a fully functional python package (project name, author, ...).
-From a python environment, or any other means, this script can be launched as easily as:
+- Pre-processed metadata for all datasets
+- Standardized data partitioning for fair comparison
+- Evaluation utilities for both intra-corpus and cross-corpus settings
+- Benchmarks on state-of-the-art pre-trained speech models
 
-    ```bash
-    # launch and follow the prompts
-    python init.py
-    ```
+For detailed information about datasets, preparation scripts, and usage examples, please refer to the [EmoBox documentation](EmoBox/README.md).
 
-6. Install the required dependencies:
+## Sensitive Attributes by Dataset
 
-   ```bash
-    # Install the bare minimum, editable is usually preferred when developing
-   pip install -e .
-   # Install extras
-   pip install -e .[dev,docs,test]
-   ```
+The following table shows the availability of sensitive attributes (demographic information and transcriptions) for each dataset in the EmoBox benchmark. Values indicate: `1` = available, `0` = not available for this dataset, `-` = information not provided/unknown, `range` = age range information available instead of exact ages.
 
+| Dataset | Age | Gender | Race | Ethnicity | Transcription |
+|---------|-----|--------|------|-----------|---------------|
+| aesdd | - | - | - | - | - |
+| ased | 0 | 1 | 0 | 0 | 0 |
+| asvp-esd | 1 | 1 | 0 | 0 | 0 |
+| cafe | 1 | 1 | 0 | 0 | 0 |
+| casia | - | - | - | - | - |
+| crema-d | 1 | 1 | 1 | 1 | 0 |
+| emns | 1 | 1 | 0 | 0 | 0 |
+| emodb | - | - | - | - | 0 |
+| emov-db | 0 | 1 | 0 | 0 | 1 |
+| emovo | 0 | 1 | 0 | 0 | 0 |
+| emozionalmente | 1 | 1 | 0 | 0 | 1 |
+| enterface | - | - | - | - | 0 |
+| esd | 0 | 1 | 0 | 1 | 1 |
+| iemocap | 0 | 1 | 0 | 0 | 1 |
+| jl-corpus | 0 | 1 | 0 | 0 | 1 |
+| m3ed | range | 1 | 0 | 0 | 1 |
+| mead | 0 | 1 | 0 | 0 | 0 |
+| meld | 1 | 1 | 1 | 1 | 1 |
+| mer2023 | - | - | - | - | - |
+| mesd | 0 | 1 | 0 | 0 | - |
+| msp-podcast | - | - | - | - | - |
+| oreau | 1 | 1 | 0 | 0 | 1 |
+| pavoque | - | - | - | - | 1 |
+| polish | range | 1 | 0 | 0 | 1 |
+| ravdess | 0 | 1 | 0 | 0 | 1 |
+| resd | - | 1 | - | - | 1 |
+| savee | range | 1 | 0 | 0 | 1 |
+| shemo | 0 | 1 | 0 | 0 | 1 |
+| subesco | 0 | 1 | 0 | 0 | - |
+| tess | range | 1 | 0 | 0 | - |
+| turev-db | 0 | 1 | 0 | 0 | - |
+| urdu | 0 | 1 | 0 | 0 | 1 |
 
-7. You're good to go! Of course, you can further customize it to your liking.
+This information is crucial for fairness analysis in emotion recognition systems, as it allows researchers to evaluate model performance and bias across different demographic groups.
 
-> **Note**
->
-> The `init.py` script is self-contained and will delete itself once the procedure is completed. It is absolutely safe to delete if you prefer to edit the files manually.
-
-## Extra goodies
-
-If you are using VS Code as your editor of choice, you can use the following
-snippet in your `settings.json` file to format and sort imports on save.
-
-```json
-{
-    "[python]": {
-        "diffEditor.ignoreTrimWhitespace": false,
-        "editor.wordBasedSuggestions": "off",
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "explicit"
-        },
-        "editor.defaultFormatter": "charliermarsh.ruff",
-    },
-}
 ```
-Of course, this is completely optional.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
