@@ -24,7 +24,7 @@ class Evaluator:
 
         self.results = None
     
-    def _collect_predictions(self, model, dataloader):
+    def _collect_predictions(self, model, dataloader, n_samples=None):
         y_pred, y_true = [], []
         sens_attr_dict = defaultdict(list)
         
@@ -39,7 +39,8 @@ class Evaluator:
                 for k, v in sample.items():
                     if k not in {'audio', 'label', 'key', 'prompt'}:
                         sens_attr_dict[k].append(v)
-            if batch_idx == 100: break
+            if n_samples is not None and len(y_pred) >= n_samples:
+                break
                         
         y_true = np.array(y_true)
         y_pred = np.array(y_pred)
@@ -50,9 +51,7 @@ class Evaluator:
         metrics = {}
 
         self.metrics_obj = ClassificationMetrics(y_true, y_pred)
-        metrics['metrics'] = self.metrics_obj.compute(
-            per_class=True, sens_attr_dict=sens_attr_dict
-        )
+        metrics['metrics'] = self.metrics_obj.compute(sens_attr_dict=sens_attr_dict)
         
         if sens_attr_dict is None:
             return metrics
@@ -65,7 +64,7 @@ class Evaluator:
             
         return metrics
     
-    def evaluate(self, model, dataloader, fold=None):
+    def evaluate(self, model, dataloader, n_samples=None, fold=None):
         model_name = model.name
         dataset_name = dataloader.dataset.name
         class_labels = set(dataloader.dataset.label_map.values())
@@ -74,7 +73,7 @@ class Evaluator:
         print(f"Evaluating {model_name} on {dataset_name}")
         print("="*80)
         
-        y_true, y_pred, sens_attr_dict = self._collect_predictions(model, dataloader)
+        y_true, y_pred, sens_attr_dict = self._collect_predictions(model, dataloader, n_samples=n_samples)
         metrics = self._compute_metrics(y_true, y_pred, sens_attr_dict)
         
         self.y_true = y_true

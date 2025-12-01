@@ -102,18 +102,29 @@ class ClassificationMetrics(object):
             per_class
         )
     
-    def compute(self, per_class=True, sens_attr_dict: dict[str, np.ndarray]=None):
+    def compute(self, sens_attr_dict: dict[str, np.ndarray]=None):
         metrics = {
-            'overall':{
+            'global':{
                 # 'acceptance_rate': self.acceptance_rate(per_class),
-                'accuracy': self.accuracy(per_class),
-                'false_positive_rate': self.false_positive_rate(per_class),
-                'false_negative_rate': self.false_negative_rate(per_class),
-                'true_positive_rate': self.true_positive_rate(per_class),
-                'true_negative_rate': self.true_negative_rate(per_class),
-                'positive_predictive_value': self.positive_predictive_value(per_class),
-                'negative_predictive_value': self.negative_predictive_value(per_class),
-                'f1_score': self.f1(per_class),
+                'accuracy': self.accuracy(per_class=False),
+                'false_positive_rate': self.false_positive_rate(per_class=False),
+                'false_negative_rate': self.false_negative_rate(per_class=False),
+                'true_positive_rate': self.true_positive_rate(per_class=False),
+                'true_negative_rate': self.true_negative_rate(per_class=False),
+                'positive_predictive_value': self.positive_predictive_value(per_class=False),
+                'negative_predictive_value': self.negative_predictive_value(per_class=False),
+                'f1_score': self.f1(per_class=False),
+            },
+            'classwise':{
+                # 'acceptance_rate': self.acceptance_rate(per_class),
+                'accuracy': self.accuracy(per_class=True),
+                'false_positive_rate': self.false_positive_rate(per_class=True),
+                'false_negative_rate': self.false_negative_rate(per_class=True),
+                'true_positive_rate': self.true_positive_rate(per_class=True),
+                'true_negative_rate': self.true_negative_rate(per_class=True),
+                'positive_predictive_value': self.positive_predictive_value(per_class=True),
+                'negative_predictive_value': self.negative_predictive_value(per_class=True),
+                'f1_score': self.f1(per_class=True),
             }
         }
         if sens_attr_dict is not None:
@@ -124,6 +135,6 @@ class ClassificationMetrics(object):
                     y_true_subset = self.y_true[idx]
                     y_pred_subset = self.y_pred[idx]
                     sub_calculator = ClassificationMetrics(y_true_subset, y_pred_subset)
-                    metrics[attr_name][cls] = sub_calculator.compute_metrics(per_class)
+                    metrics[attr_name][cls] = sub_calculator.compute()
         return metrics
         
