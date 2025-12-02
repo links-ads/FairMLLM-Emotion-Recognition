@@ -1,0 +1,1 @@
+python scripts/test_prompts.py --dataset iemocap --model qwen2-audio-instruct --prompt simple format user_labels --runs 5

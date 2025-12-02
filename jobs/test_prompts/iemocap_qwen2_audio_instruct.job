@@ -1,0 +1,14 @@
+#!/bin/bash 
+#SBATCH --job-name=test_prompts_iemocap
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=msteams:dasaro 
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=32G
+#SBATCH --time=48:00:00 
+#SBATCH --partition=A100
+#SBATCH --gpus=3g.40gb:1
+#SBATCH --output=log/test_prompts_iemocap.out
+
+source .venv/bin/activate 
+python scripts/test_prompts.py --fold 1

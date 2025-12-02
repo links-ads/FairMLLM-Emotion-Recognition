@@ -1,20 +1,19 @@
-"""Qwen2-Audio wrapper for Emotion Recognition."""
+"""Qwen2-Audio-Instruct wrapper for Emotion Recognition."""
 
 import logging
 import torch
-import random
-import numpy as np
 
 from typing import List, Union
 from .base import BaseEmotionModel
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration, set_seed
-from transformers.models.qwen2_audio.modeling_qwen2_audio  import Qwen2AudioCausalLMOutputWithPast
-from .prompts.string import get_prompt_template
+from transformers.models.qwen2_audio.modeling_qwen2_audio import Qwen2AudioCausalLMOutputWithPast
+from .prompts.chat import build_conversation
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_EMOTIONS = ["Happy", "Sad", "Angry", "Neutral", "Fear", "Disgust", "Surprise"]
-class Qwen2AudioEmotionWrapper(BaseEmotionModel):
+
+class Qwen2AudioInstructEmotionWrapper(BaseEmotionModel):
     
     def __init__(
         self,
@@ -33,8 +32,8 @@ class Qwen2AudioEmotionWrapper(BaseEmotionModel):
         set_seed(seed)
         self.seed = seed
 
-        self.name = "qwen2-audio"
-        self.checkpoint = "Qwen/Qwen2-Audio-7B"
+        self.name = "qwen2-audio-instruct"
+        self.checkpoint = "Qwen/Qwen2-Audio-7B-Instruct"
         self.trust_remote_code = trust_remote_code
         self.torch_dtype = torch_dtype
         self.max_new_tokens = max_new_tokens
@@ -49,34 +48,40 @@ class Qwen2AudioEmotionWrapper(BaseEmotionModel):
             torch_dtype=self.torch_dtype
         )
         self.model.eval()
-        self.model.to(self.device)
         self.processor = AutoProcessor.from_pretrained(self.checkpoint)
-        self.processor.tokenizer.padding_side = 'left'
 
         self.class_labels = list(class_labels) if class_labels is not None else DEFAULT_EMOTIONS
         self.letter_to_label = {label[0].upper(): label for label in self.class_labels}
 
         self.prompt_name = prompt_name
-        self.prompt_template = get_prompt_template(prompt_name)
 
     def collate_fn(self, inputs):
         input_audios = [_['audio'] for _ in inputs]
+        labels = [_['label'] for _ in inputs]
 
         if "letter" in self.prompt_name:
             labels_str = ", ".join([f"{l}: {label}" for l, label in self.letter_to_label.items()])
         else:
             labels_str = ", ".join(self.class_labels)
 
-        input_texts = [self.prompt_template.format(labels=labels_str) for _ in inputs]
-        
-        labels = [_['label'] for _ in inputs]
+        conversations = []
+        for _ in input_audios:
+            conversation = build_conversation(self.prompt_name, labels_str)
+            conversations.append(conversation)
+
+        texts = [
+            self.processor.apply_chat_template(conv, add_generation_prompt=True, tokenize=False)
+            for conv in conversations
+        ]
+
         inputs = self.processor(
-            text=input_texts,
-            audio=input_audios,
-            sampling_rate=self.processor.feature_extractor.sampling_rate,
+            text=texts,
+            audios=input_audios,
             return_tensors="pt",
             padding=True,
+            sampling_rate=self.processor.feature_extractor.sampling_rate
         )
+        
         return inputs, labels
     
     def _decode_outputs(
@@ -98,27 +103,27 @@ class Qwen2AudioEmotionWrapper(BaseEmotionModel):
         for response in responses:
             response = response.strip()
             found_label = None
+            
             for label in self.class_labels:
                 if label.lower() in response.lower():
                     found_label = label
-                if self.letter_to_label.get(response.upper()) == label:
-                    found_label = label
+                    break
+            
+            if found_label is None:
+                for letter, label in self.letter_to_label.items():
+                    if letter == response.upper():
+                        found_label = label
+                        break
+            
             if found_label is None: 
-                print(f'Warning: could not parse response "{response}"')
+                logger.warning(f'Could not parse response: "{response}"')
+            
             parsed_emotions.append(found_label)
-
-        # parsed_emotions = []
-        # for response in responses:
-        #     response = response.strip().upper()
-        #     found_label = self.letter_to_label.get(response)
-        #     parsed_emotions.append(found_label)
         
         return parsed_emotions
 
-    def predict(
-        self,
-        inputs: dict,
-    ) -> List[Union[str, int]]:
+    def predict(self, inputs: dict) -> List[Union[str, int]]:
+        set_seed(self.seed)
         
         with torch.no_grad():
             output_ids = self.model.generate(
@@ -126,20 +131,11 @@ class Qwen2AudioEmotionWrapper(BaseEmotionModel):
                 max_new_tokens=self.max_new_tokens,
                 min_new_tokens=self.min_new_tokens,
                 do_sample=self.do_sample,
-                # num_beams=1,
-                # temperature=1.0,  # Keep at 1.0 when do_sample=False
-                # top_p=1.0,
             )
-        outputs = self._decode_outputs(
-            inputs['input_ids'],
-            output_ids
-        )
+        
+        outputs = self._decode_outputs(inputs['input_ids'], output_ids)
         predictions = self._parse_emotion_response(outputs)
-        return predictions
+        return outputs
 
-    def forward(
-        self,
-        inputs: dict,
-    ) -> Qwen2AudioCausalLMOutputWithPast:
-        output = self.model(**inputs)
-        return output
+    def forward(self, inputs: dict) -> Qwen2AudioCausalLMOutputWithPast:
+        return self.model(**inputs)
