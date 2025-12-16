@@ -7,6 +7,7 @@ import soundfile as sf
 import librosa
 import numpy as np
 import logging
+import unicodedata
 # import torchaudio
 SAMPLING_RATE=16000
 logger = logging.getLogger(__name__)
@@ -30,8 +31,7 @@ logger = logging.getLogger(__name__)
 def check_exists(data, data_dir, logger):
     new_data = []
     for instance in data:
-        audio_path = instance['wav']
-        
+        audio_path = unicodedata.normalize('NFC', instance['wav'])
         if os.path.exists(audio_path):
             new_data.append(instance)
     print(f'load in {len(data)} samples, only {len(new_data)} exists in data dir {data_dir}')        
@@ -122,7 +122,9 @@ def split_sets(train_data, split_ratio):
 
 # Modified to load audio with soundfile instead of torchaudio
 def read_wav(data):
-    wav_path = data['wav']
+    wav_path = unicodedata.normalize('NFC', data['wav'])
+    if not os.path.exists(wav_path):
+        raise FileNotFoundError(f"{wav_path} does not exist.")
     channel = data['channel']
     dur = float(data['length'])
     if 'start_time' in data and 'end_time' in data:
@@ -133,38 +135,41 @@ def read_wav(data):
         end_time = None    
     if start_time is not None and end_time is not None:
         # sample_rate = torchaudio.info(wav_path).sample_rate
-        # sample_rate = sf.info(wav_path).samplerate
-        # frame_offset = int(start_time * sample_rate)
         # num_frames = int(end_time * sample_rate) - frame_offset
         # wav, sr = torchaudio.load(wav_path, frame_offset=frame_offset, num_frames=num_frames)
-        # wav, sr = sf.read(wav_path, start=frame_offset, frames=num_frames,dtype='float32')
 
-        duration = end_time - start_time
-        wav, sr = librosa.load(
-            wav_path, 
-            sr=SAMPLING_RATE, 
-            offset=start_time, 
-            duration=duration,
-            mono=True
-        )
+        sample_rate = sf.info(wav_path).samplerate
+        frame_offset = int(start_time * sample_rate)
+        num_frames = int(end_time * sample_rate) - frame_offset
+        wav, sr = sf.read(wav_path, start=frame_offset, frames=num_frames,dtype='float32')
+
+        # duration = end_time - start_time
+        # wav, sr = librosa.load(
+        #     wav_path, 
+        #     sr=SAMPLING_RATE, 
+        #     offset=start_time, 
+        #     duration=duration,
+        #     mono=True
+        # )
     else:    
         # wav, sr = torchaudio.load(wav_path)
-        # wav, sr = sf.read(wav_path, dtype='float32')
-        wav, sr = librosa.load(wav_path, sr=SAMPLING_RATE, mono=True)
+        wav, sr = sf.read(wav_path, dtype='float32')
+        # wav, sr = librosa.load(wav_path, sr=SAMPLING_RATE, mono=True)
 
     # Handle multi-channel audio (convert to mono)
     if wav.ndim > 1:
         wav = wav.mean(axis=-1)
 
-    # if sr != SAMPLING_RATE:
+    if sr != SAMPLING_RATE:
         # wav = torchaudio.functional.resample(wav, sr, SAMPLING_RATE)
-        # wav = librosa.resample(wav, orig_sr=sr, target_sr=SAMPLING_RATE)
+        wav = librosa.resample(wav, orig_sr=sr, target_sr=SAMPLING_RATE)
 
 
     # wav = wav.view(-1)    
-    # return wav 
+    return wav 
 
-    return wav.astype(np.float32)
+    # librosa
+    # return wav.astype(np.float32)
 
 class EmoDataset(Dataset):
     def __init__(self, dataset, data_dir, meta_data_dir, fold=1, split="train"):
@@ -191,10 +196,7 @@ class EmoDataset(Dataset):
 
     def __getitem__(self, idx):
         data = self.data_list[idx]
-        key = data["key"]
-        audio = os.path.join(self.data_dir, data["wav"])
-        if not os.path.exists(audio):
-            raise FileNotFoundError(f"{audio} does not exist.")    
+        key = data["key"]  
         audio = read_wav(data)
         label = data['emo']
         sensitive_attr = data.get('sensitive_attr', {})

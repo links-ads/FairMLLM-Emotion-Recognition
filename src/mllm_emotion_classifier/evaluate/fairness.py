@@ -10,12 +10,18 @@ class FairnessMetrics(object):
             sens_attr_values: np.ndarray,
         ):
 
-        self.true_y = np.asarray(targets) # target variables
-        self.pred_y = np.asarray(predictions) # prediction of the classifier
+        unique_classes = sorted(set(targets))
+        class_to_idx = {cls: idx for idx, cls in enumerate(unique_classes)}
+        
+        unique_sens = sorted(set(sens_attr_values))
+        sens_to_idx = {s: idx for idx, s in enumerate(unique_sens)}
+        
+        self.true_y = np.array([class_to_idx[y] for y in targets])
+        self.pred_y = np.array([class_to_idx[y] for y in predictions])
         self.sens_attr = sens_attr
-        self.sens_attr_values = sens_attr_values
+        self.sens_attr_values = np.array([sens_to_idx[s] for s in sens_attr_values])
 
-        self.class_range = list(set(self.true_y))
+        self.class_range = list(range(len(unique_classes)))
         self.y_hat = []
         self.yneq_hat = []
         for y_hat_idx in self.class_range:
@@ -50,12 +56,12 @@ class FairnessMetrics(object):
             stat_parity.append([])
             for s_idx in self.sens_attr_range:
                 stat_parity[y_hat_idx].append(
-                    sum(np.bitwise_and(self.y_hat[y_hat_idx], self.s[s_idx])) /
-                    sum(self.s[s_idx])
+                    float(sum(np.bitwise_and(self.y_hat[y_hat_idx], self.s[s_idx])) /
+                    sum(self.s[s_idx]))
                 )
         return stat_parity
 
-    
+
     def equal_opportunity(self):
         """
         P(y^=0|y=0,s=0) = P(y^=0|y=0,s=1) = ... = P(y^=0|y=0,s=N)
@@ -66,13 +72,14 @@ class FairnessMetrics(object):
         for y_hat_idx in self.class_range:
             equal_opp.append([])
             for s_idx in self.sens_attr_range:
-                try:
+                denominator = sum(self.y_s[y_hat_idx][s_idx])
+                if denominator == 0:
+                    equal_opp[y_hat_idx].append(None)  # or 0.0, or np.nan explicitly
+                else:
                     equal_opp[y_hat_idx].append(
-                        sum(np.bitwise_and(self.y_hat[y_hat_idx], self.y_s[y_hat_idx][s_idx])) /
-                        sum(self.y_s[y_hat_idx][s_idx])
+                        float(sum(np.bitwise_and(self.y_hat[y_hat_idx], self.y_s[y_hat_idx][s_idx])) /
+                        denominator)
                     )
-                except ZeroDivisionError:
-                    equal_opp[y_hat_idx].append(0)
         return equal_opp
 
 
@@ -81,15 +88,17 @@ class FairnessMetrics(object):
         oae_s = []
         for s_idx in self.sens_attr_range:
             oae_temp = 0.0
+            count = 0
             for y_hat_idx in self.class_range:
-                try:
-                    oae_temp += (
+                denominator = sum(self.y_s[y_hat_idx][s_idx])
+                if denominator > 0:
+                    oae_temp += float(
                         sum(np.bitwise_and(self.y_hat[y_hat_idx], self.y_s[y_hat_idx][s_idx])) /
-                        sum(self.y_s[y_hat_idx][s_idx])
+                        denominator
                     )
-                except ZeroDivisionError:
-                    oae_temp += 0.0
-            oae_s.append(oae_temp)
+                    count += 1
+            # If no classes had samples for this sensitive attribute group
+            oae_s.append(oae_temp if count > 0 else None)
         return oae_s
 
 
@@ -111,19 +120,19 @@ class FairnessMetrics(object):
             for s_idx in self.sens_attr_range:
                 try:
                     te_fp_fn[y_hat_idx].append(
-                        (sum(np.bitwise_and(self.y_hat[y_hat_idx], self.yneq_s[y_hat_idx][s_idx])) / sum(self.yneq_s[y_hat_idx][s_idx])) /
-                        (sum(np.bitwise_and(self.yneq_hat[y_hat_idx], self.y_s[y_hat_idx][s_idx])) / sum(self.y_s[y_hat_idx][s_idx]))
+                        float((sum(np.bitwise_and(self.y_hat[y_hat_idx], self.yneq_s[y_hat_idx][s_idx])) / sum(self.yneq_s[y_hat_idx][s_idx])) /
+                        (sum(np.bitwise_and(self.yneq_hat[y_hat_idx], self.y_s[y_hat_idx][s_idx])) / sum(self.y_s[y_hat_idx][s_idx])))
                     )
                 except ZeroDivisionError:
-                    te_fp_fn[y_hat_idx].append(100)
+                    te_fp_fn[y_hat_idx].append(100.0)
                 
                 try:
                     te_fn_fp[y_hat_idx].append(
-                        (sum(np.bitwise_and(self.yneq_hat[y_hat_idx], self.y_s[y_hat_idx][s_idx])) / sum(self.y_s[y_hat_idx][s_idx])) /
-                        (sum(np.bitwise_and(self.y_hat[y_hat_idx], self.yneq_s[y_hat_idx][s_idx])) / sum(self.yneq_s[y_hat_idx][s_idx]))
+                        float((sum(np.bitwise_and(self.yneq_hat[y_hat_idx], self.y_s[y_hat_idx][s_idx])) / sum(self.y_s[y_hat_idx][s_idx])) /
+                        (sum(np.bitwise_and(self.y_hat[y_hat_idx], self.yneq_s[y_hat_idx][s_idx])) / sum(self.yneq_s[y_hat_idx][s_idx])))
                     )
                 except ZeroDivisionError:
-                    te_fn_fp[y_hat_idx].append(100)
+                    te_fn_fp[y_hat_idx].append(100.0)
 
                 abs_te_fp_fn += abs(te_fp_fn[y_hat_idx][s_idx])
                 abs_te_fn_fp += abs(te_fn_fp[y_hat_idx][s_idx])

@@ -5,15 +5,16 @@ from collections import defaultdict
 from tqdm import tqdm
 from datetime import datetime
 from .metrics import ClassificationMetrics
-from .fairness import FairnessMetrics
+from .statistics import Statistics
 
 
 class Evaluator:
 
-    def __init__(self, output_dir="results"):
+    def __init__(self, output_dir=None):
 
         self.output_dir = output_dir
-        os.makedirs(output_dir, exist_ok=True)
+        if output_dir is not None:
+            os.makedirs(output_dir, exist_ok=True)
         
         self.y_true = None
         self.y_pred = None
@@ -37,14 +38,14 @@ class Evaluator:
             for idx in range(start_idx, min(start_idx + len(labels), len(dataloader.dataset))):
                 sample = dataloader.dataset[idx]
                 for k, v in sample.items():
-                    if k not in {'audio', 'label', 'key', 'prompt'}:
+                    if k not in {'audio', 'label', 'key', 'text'}:
                         sens_attr_dict[k].append(v)
             if n_samples is not None and len(y_pred) >= n_samples:
                 break
                         
         y_true = np.array(y_true)
         y_pred = np.array(y_pred)
-        sens_attr_dict = dict(sens_attr_dict)
+        sens_attr_dict = {k: np.array(v) for k, v in sens_attr_dict.items()}
         return y_true, y_pred, sens_attr_dict     
     
     def _compute_metrics(self, y_true, y_pred, sens_attr_dict):
@@ -53,16 +54,23 @@ class Evaluator:
         self.metrics_obj = ClassificationMetrics(y_true, y_pred)
         metrics['metrics'] = self.metrics_obj.compute(sens_attr_dict=sens_attr_dict)
         
-        if sens_attr_dict is None:
-            return metrics
+        # if sens_attr_dict is None:
+        #     return metrics
         
-        for attr_name, sens_attr_values in sens_attr_dict.items():
-            self.fairness_obj = FairnessMetrics(
-                y_true, y_pred, attr_name, sens_attr_values
-            )
-            metrics['fairness'][attr_name] = self.fairness_obj.compute()
+        # metrics['fairness'] = {}
+        # for attr_name, sens_attr_values in sens_attr_dict.items():
+        #     print(type(sens_attr_values))
+        #     print(type(sens_attr_values[0]))
+        #     self.fairness_obj = FairnessMetrics(
+        #         y_true, y_pred, attr_name, sens_attr_values
+        #     )
+        #     metrics['fairness'][attr_name] = self.fairness_obj.compute()
             
         return metrics
+
+    def _compute_stats(self, y_true, sens_attr_dict=None):
+        stats = Statistics(y_true, sens_attr_dict).compute()
+        return {'stats': stats}
     
     def evaluate(self, model, dataloader, n_samples=None, fold=None):
         model_name = model.name
@@ -73,21 +81,34 @@ class Evaluator:
         print(f"Evaluating {model_name} on {dataset_name}")
         print("="*80)
         
-        y_true, y_pred, sens_attr_dict = self._collect_predictions(model, dataloader, n_samples=n_samples)
-        metrics = self._compute_metrics(y_true, y_pred, sens_attr_dict)
+        self.y_true, self.y_pred, self.sens_attr_dict = self._collect_predictions(model, dataloader, n_samples=n_samples)
+
+        total_indices = list(range(len(self.y_pred)))
+        valid_indices = [i for i, p in enumerate(self.y_pred) if p is not "Unknown"]
+        if not valid_indices:
+            raise ValueError("No valid predictions were made.")
         
-        self.y_true = y_true
-        self.y_pred = y_pred
-        self.sens_attr_dict = sens_attr_dict
+        # self.y_pred = np.array([self.y_pred[i] for i in valid_indices])
+        # self.y_true = np.array([self.y_true[i] for i in valid_indices])
+        # if self.sens_attr_dict:
+        #     self.sens_attr_dict = {
+        #         k: np.array([v[i] for i in valid_indices]) 
+        #         for k, v in self.sens_attr_dict.items()
+        #     }
+
+        # stats = self._compute_stats(self.y_pred, self.sens_attr_dict)
+        metrics = self._compute_metrics(self.y_true, self.y_pred, self.sens_attr_dict)
+        
         self.results = {
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'dataset': dataset_name,
             'model_name': model_name,
             'fold': fold,
-            'num_samples': len(y_pred),
-            'num_valid_predictions': np.sum(y_pred != None),
+            'num_samples': len(self.y_pred),
+            'valid_rate': round(len(valid_indices) / len(total_indices), 4),
             'class_labels': list(class_labels),
-            **metrics
+            # **stats,
+            **metrics,
         }
         return self.results
     

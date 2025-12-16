@@ -1,6 +1,13 @@
 import numpy as np
 
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import (
+    confusion_matrix,
+    accuracy_score,
+    balanced_accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score
+)
 
 class ClassificationMetrics(object):
     def __init__( self, y_true: np.ndarray, y_pred: np.ndarray, class_labels: list[str]=None):
@@ -68,7 +75,7 @@ class ClassificationMetrics(object):
         )
     
     def true_positive_rate(self, per_class=True):
-        """TPR = TP / (TP + FN)"""
+        """TPR (Recall) = TP / (TP + FN)"""
         return self._compute_metric(
             lambda tn, fp, fn, tp: tp / (tp + fn) if (tp + fn) > 0 else 0.0,
             per_class
@@ -82,7 +89,7 @@ class ClassificationMetrics(object):
         )
     
     def positive_predictive_value(self, per_class=True):
-        """PPV = TP / (TP + FP)"""
+        """PPV (Precision) = TP / (TP + FP)"""
         return self._compute_metric(
             lambda tn, fp, fn, tp: tp / (tp + fp) if (tp + fp) > 0 else 0.0,
             per_class
@@ -101,22 +108,52 @@ class ClassificationMetrics(object):
             lambda tn, fp, fn, tp: (2 * tp) / (2 * tp + fp + fn) if (2 * tp + fp + fn) > 0 else 0.0,
             per_class
         )
+
+    def accuracy_weighted(self):
+        """Accuracy (overall correctness)"""
+        return round(float(accuracy_score(self.y_true, self.y_pred)), 4)
+
+    def accuracy_unweighted(self):
+        """Balanced Accuracy (average of per-class recalls)"""
+        return round(float(balanced_accuracy_score(self.y_true, self.y_pred)), 4)
+    
+    def precision_macro(self):
+        """Macro Precision"""
+        return round(float(precision_score(self.y_true, self.y_pred, average='macro', zero_division=0)), 4)
+    
+    def precision_weighted(self):
+        """Weighted Precision"""
+        return round(float(precision_score(self.y_true, self.y_pred, average='weighted', zero_division=0)), 4)
+    
+    def recall_macro(self):
+        """Macro Recall"""
+        return round(float(recall_score(self.y_true, self.y_pred, average='macro', zero_division=0)), 4)
+    
+    def recall_weighted(self):
+        """Weighted Recall"""
+        return round(float(recall_score(self.y_true, self.y_pred, average='weighted', zero_division=0)), 4)
+    
+    def f1_macro(self):
+        """Macro F1 Score"""
+        return round(float(f1_score(self.y_true, self.y_pred, average='macro', zero_division=0)), 4)
+    
+    def f1_weighted(self):
+        """Weighted F1 Score"""
+        return round(float(f1_score(self.y_true, self.y_pred, average='weighted', zero_division=0)), 4)
     
     def compute(self, sens_attr_dict: dict[str, np.ndarray]=None):
         metrics = {
             'global':{
-                # 'acceptance_rate': self.acceptance_rate(per_class),
-                'accuracy': self.accuracy(per_class=False),
-                'false_positive_rate': self.false_positive_rate(per_class=False),
-                'false_negative_rate': self.false_negative_rate(per_class=False),
-                'true_positive_rate': self.true_positive_rate(per_class=False),
-                'true_negative_rate': self.true_negative_rate(per_class=False),
-                'positive_predictive_value': self.positive_predictive_value(per_class=False),
-                'negative_predictive_value': self.negative_predictive_value(per_class=False),
-                'f1_score': self.f1(per_class=False),
+                'f1_macro': self.f1_macro(),
+                'f1_weighted': self.f1_weighted(),
+                'accuracy_unweighted': self.accuracy_unweighted(),
+                'accuracy_weighted': self.accuracy_weighted(),
+                'precision_macro': self.precision_macro(),
+                'precision_weighted': self.precision_weighted(),
+                'recall_macro': self.recall_macro(),
+                'recall_weighted': self.recall_weighted(),
             },
             'classwise':{
-                # 'acceptance_rate': self.acceptance_rate(per_class),
                 'accuracy': self.accuracy(per_class=True),
                 'false_positive_rate': self.false_positive_rate(per_class=True),
                 'false_negative_rate': self.false_negative_rate(per_class=True),
@@ -135,6 +172,5 @@ class ClassificationMetrics(object):
                     y_true_subset = self.y_true[idx]
                     y_pred_subset = self.y_pred[idx]
                     sub_calculator = ClassificationMetrics(y_true_subset, y_pred_subset)
-                    metrics[attr_name][cls] = sub_calculator.compute()
+                    metrics[attr_name][str(cls)] = sub_calculator.compute()
         return metrics
-        

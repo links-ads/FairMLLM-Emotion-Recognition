@@ -22,11 +22,14 @@ class Qwen2AudioEmotionWrapper(BaseEmotionModel):
         torch_dtype: str = 'auto',
         max_new_tokens: int = 5,
         min_new_tokens: int = 1,
-        do_sample: bool = False,
+        temperature: float = 1.0,
+        top_p: float = 1.0,
+        do_sample: bool = True,
         class_labels = None,
         prompt_name: str = "simple",
         device: str = "cuda",
         seed: int = 42,
+
         **kwargs,
     ):
         super().__init__()
@@ -40,6 +43,8 @@ class Qwen2AudioEmotionWrapper(BaseEmotionModel):
         self.max_new_tokens = max_new_tokens
         self.min_new_tokens = min_new_tokens
         self.do_sample = do_sample
+        self.temperature = temperature
+        self.top_p = top_p
         self.device = device
 
         self.model = Qwen2AudioForConditionalGeneration.from_pretrained(
@@ -53,7 +58,7 @@ class Qwen2AudioEmotionWrapper(BaseEmotionModel):
         self.processor = AutoProcessor.from_pretrained(self.checkpoint)
         self.processor.tokenizer.padding_side = 'left'
 
-        self.class_labels = list(class_labels) if class_labels is not None else DEFAULT_EMOTIONS
+        self.class_labels = list(class_labels)
         self.letter_to_label = {label[0].upper(): label for label in self.class_labels}
 
         self.prompt_name = prompt_name
@@ -62,10 +67,7 @@ class Qwen2AudioEmotionWrapper(BaseEmotionModel):
     def collate_fn(self, inputs):
         input_audios = [_['audio'] for _ in inputs]
 
-        if "letter" in self.prompt_name:
-            labels_str = ", ".join([f"{l}: {label}" for l, label in self.letter_to_label.items()])
-        else:
-            labels_str = ", ".join(self.class_labels)
+        labels_str = ", ".join(self.class_labels)
 
         input_texts = [self.prompt_template.format(labels=labels_str) for _ in inputs]
         
@@ -97,13 +99,13 @@ class Qwen2AudioEmotionWrapper(BaseEmotionModel):
         
         for response in responses:
             response = response.strip()
-            found_label = None
+            found_label = "Unknown"
             for label in self.class_labels:
                 if label.lower() in response.lower():
                     found_label = label
                 if self.letter_to_label.get(response.upper()) == label:
                     found_label = label
-            if found_label is None: 
+            if found_label == "Unknown": 
                 print(f'Warning: could not parse response "{response}"')
             parsed_emotions.append(found_label)
 
@@ -126,9 +128,8 @@ class Qwen2AudioEmotionWrapper(BaseEmotionModel):
                 max_new_tokens=self.max_new_tokens,
                 min_new_tokens=self.min_new_tokens,
                 do_sample=self.do_sample,
-                # num_beams=1,
-                # temperature=1.0,  # Keep at 1.0 when do_sample=False
-                # top_p=1.0,
+                temperature=self.temperature,
+                top_p=self.top_p,
             )
         outputs = self._decode_outputs(
             inputs['input_ids'],
