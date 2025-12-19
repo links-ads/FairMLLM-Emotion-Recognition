@@ -135,57 +135,30 @@ def read_wav(data):
         end_time = None
     
     is_webm = wav_path.lower().endswith('.webm')
+
+    mono = True
+    if is_webm:
+        mono = False
     
     if start_time is not None and end_time is not None:
-        # sample_rate = torchaudio.info(wav_path).sample_rate
-        # num_frames = int(end_time * sample_rate) - frame_offset
-        # wav, sr = torchaudio.load(wav_path, frame_offset=frame_offset, num_frames=num_frames)
-
-        if is_webm:
-            duration = end_time - start_time
-            wav, sr = librosa.load(
-                wav_path, 
-                sr=None, 
-                offset=start_time, 
-                duration=duration,
-                mono=False
-            )
-        else:
-            sample_rate = sf.info(wav_path).samplerate
-            frame_offset = int(start_time * sample_rate)
-            num_frames = int(end_time * sample_rate) - frame_offset
-            wav, sr = sf.read(wav_path, start=frame_offset, frames=num_frames,dtype='float32')
-
-        # duration = end_time - start_time
-        # wav, sr = librosa.load(
-        #     wav_path, 
-        #     sr=SAMPLING_RATE, 
-        #     offset=start_time, 
-        #     duration=duration,
-        #     mono=True
-        # )
+        duration = end_time - start_time
+        wav, sr = librosa.load(
+            wav_path, 
+            sr=None, 
+            offset=start_time, 
+            duration=duration,
+            mono=mono
+        )
     else:
-        if is_webm:
-            wav, sr = librosa.load(wav_path, sr=None, mono=False)
-        else:
-            # wav, sr = torchaudio.load(wav_path)
-            wav, sr = sf.read(wav_path, dtype='float32')
-            # wav, sr = librosa.load(wav_path, sr=SAMPLING_RATE, mono=True)
+        wav, sr = librosa.load(wav_path, sr=None, mono=mono)
 
-    # Handle multi-channel audio (convert to mono)
     if wav.ndim > 1:
         wav = wav.mean(axis=-1)
 
     if sr != SAMPLING_RATE:
-        # wav = torchaudio.functional.resample(wav, sr, SAMPLING_RATE)
         wav = librosa.resample(wav, orig_sr=sr, target_sr=SAMPLING_RATE)
-
-
-    # wav = wav.view(-1)    
-    return wav 
-
-    # librosa
-    # return wav.astype(np.float32)
+        
+    return wav.astype(np.float32)
 
 class EmoDataset(Dataset):
     def __init__(self, dataset, data_dir, meta_data_dir, fold=1, split="train"):

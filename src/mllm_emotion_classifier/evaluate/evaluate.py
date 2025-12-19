@@ -6,6 +6,7 @@ from tqdm import tqdm
 from datetime import datetime
 from .metrics import ClassificationMetrics
 from .statistics import Statistics
+from ..utils import quantile_binning
 
 
 class Evaluator:
@@ -46,6 +47,14 @@ class Evaluator:
         y_true = np.array(y_true)
         y_pred = np.array(y_pred)
         sens_attr_dict = {k: np.array(v) for k, v in sens_attr_dict.items()}
+
+        # binning sensitive attributes if needed
+        for attr_name, attr_values in sens_attr_dict.items():
+            if attr_name.lower() in ['age']:
+                binned_values = quantile_binning(attr_values, n_bins=4)
+                sens_attr_dict[attr_name] = binned_values
+                print(f"Binned sensitive attribute '{attr_name}' into quantile bins.")
+                
         return y_true, y_pred, sens_attr_dict     
     
     def _compute_metrics(self, y_true, y_pred, sens_attr_dict):
