@@ -122,7 +122,9 @@ def split_sets(train_data, split_ratio):
 
 # Modified to load audio with soundfile instead of torchaudio
 def read_wav(data):
-    wav_path = unicodedata.normalize('NFC', data['wav'])
+    wav_path = data['wav']
+    is_webm = wav_path.lower().endswith('.webm')
+    wav_path = unicodedata.normalize('NFC', wav_path)
     if not os.path.exists(wav_path):
         raise FileNotFoundError(f"{wav_path} does not exist.")
     channel = data['channel']
@@ -133,8 +135,6 @@ def read_wav(data):
     else:
         start_time = None
         end_time = None
-    
-    is_webm = wav_path.lower().endswith('.webm')
 
     mono = True
     if is_webm:

@@ -30,7 +30,7 @@ def plot_global_over_attribute_values(df, top_p, attribute, attribute_values, te
     for value in attribute_values:
         col_name = f'{attribute}_{value}_global_{metric}'
         if col_name in df.columns:
-            data.append(df[col_name].mean())
+            data.append(df[col_name].mean() * 100)
         else:
             data.append(0)
     
@@ -43,17 +43,19 @@ def plot_global_over_attribute_values(df, top_p, attribute, attribute_values, te
     for bar in bars:
         height = bar.get_height()
         ax.text(bar.get_x() + bar.get_width()/2., height,
-                f'{height:.3f}',
+                f'{height:.1f}',
                 ha='center', va='bottom', fontsize=18, fontweight='bold')
     
     metric_label = metric.replace('_', '-').title()
-    ax.set_ylabel(metric_label, fontsize=18, fontweight='bold')
-    ax.set_title(f'{dataset}', fontsize=18, fontweight='bold', pad=20)
+    ax.set_ylabel(metric_label, fontsize=20, fontweight='bold')
+    # ax.set_title(f'{dataset}', fontsize=20, fontweight='bold', pad=20)
     ax.set_xticks(x)
-    ax.set_xticklabels(attribute_values, fontsize=14)
-    ax.set_ylim(0, 1.0)
+    # Replace spaces with newlines for multi-word labels
+    formatted_labels = [label.replace(' ', '\n') for label in attribute_values]
+    ax.set_xticklabels(formatted_labels, fontsize=17)
+    ax.set_ylim(0, 100)
     ax.grid(True, alpha=0.3, axis='y', linestyle='--')
-    ax.tick_params(axis='both', labelsize=14)
+    ax.tick_params(axis='both', labelsize=17)
     
     # if model and dataset:
     #     fold_str = fold if fold is not None else 'All'
@@ -86,7 +88,7 @@ def plot_classwise_over_attribute_values(df, top_p, emotions, attribute, attribu
 
     assert metric in ['accuracy', 'true_positive_rate', 'false_positive_rate', 'f1_score'], "Invalid metric"
 
-    color_palette = [ '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c']
+    color_palette = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c']
     attribute_values = sorted(list(attribute_values))
     colors = {value: color_palette[i % len(color_palette)] for i, value in enumerate(attribute_values)}
     
@@ -97,7 +99,7 @@ def plot_classwise_over_attribute_values(df, top_p, emotions, attribute, attribu
         for value in attribute_values:
             col_name = f'{attribute}_{value}_classwise_{metric}_{emotion}'
             if col_name in df.columns:
-                data[value].append(df[col_name].mean())
+                data[value].append(df[col_name].mean() * 100)
             else:
                 data[value].append(0)
     
@@ -111,21 +113,25 @@ def plot_classwise_over_attribute_values(df, top_p, emotions, attribute, attribu
     
     for i, value in enumerate(attribute_values):
         bar_positions = x - offset + i * width
-        bars = ax.bar(bar_positions, data[value], width, label=value, 
+        # Format legend labels with newlines
+        formatted_value = value.replace(' ', '\n')
+        bars = ax.bar(bar_positions, data[value], width, label=formatted_value, 
                      color=colors[value], alpha=0.8)
         for bar in bars:
             height = bar.get_height()
             if height > 0:
                 ax.text(bar.get_x() + bar.get_width()/2., height,
-                       f'{height:.3f}',
+                       f'{height:.1f}',
                        ha='center', va='bottom', fontsize=10, fontweight='bold')
     
     metric_label = metric.replace('_', ' ').title()
     ax.set_ylabel(metric_label, fontsize=18, fontweight='bold')
     ax.set_title(f'{dataset}', fontsize=18, fontweight='bold', pad=20)
     ax.set_xticks(x)
-    ax.set_xticklabels(emotions_list, fontsize=14)
-    ax.set_ylim(0, 1.0)
+    # Replace spaces with newlines for multi-word emotion labels
+    formatted_emotions = [emotion.replace(' ', '\n') for emotion in emotions_list]
+    ax.set_xticklabels(formatted_emotions, fontsize=14)
+    ax.set_ylim(0, 100)
     ax.legend(fontsize=12, title=attribute.title(), title_fontsize=14)
     ax.grid(True, alpha=0.3, axis='y', linestyle='--')
     ax.tick_params(axis='both', labelsize=14)

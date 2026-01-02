@@ -32,7 +32,7 @@ def plot_fairness_vs_hparam(
                'negative_predictive_parity': 'X', 'overall_accuracy_equality': 'P',
                'global_f1_macro': 'o'}
     
-    fig, ax = plt.subplots(figsize=(6, 4.5))
+    fig, ax = plt.subplots(figsize=(5.5, 4.0))
     
     # Plot F1 Macro
     ax.plot(grouped[hparam], grouped['global_f1_macro_mean'], marker='o', linewidth=3, 
@@ -57,15 +57,15 @@ def plot_fairness_vs_hparam(
                             grouped[mean_col] + grouped[std_col], 
                             alpha=0.3, color=colors[metric])
     
-    ax.set_xlabel(hparam.capitalize(), fontsize=17, fontweight='bold')
-    ax.set_ylabel('Score', fontsize=17, fontweight='bold')
+    ax.set_xlabel(hparam.capitalize(), fontsize=18, fontweight='bold')
+    ax.set_ylabel('Score', fontsize=18, fontweight='bold')
     ax.set_xticks(grouped[hparam])
-    ax.tick_params(axis='both', labelsize=17)
-    ax.set_ylim(0, 1.0)
+    ax.tick_params(axis='both', labelsize=18)
+    ax.set_ylim(-0.1, 1.0)
     ax.grid(True, alpha=0.3, linestyle='--')
-    ax.legend(fontsize=13, loc='best')
+    ax.legend(fontsize=12, loc='best')
     
-    plt.title(f'{sensitive_attr.upper()} -- {dataset.upper()}', fontsize=18, fontweight='bold', pad=20)
+    # plt.title(f'{sensitive_attr.upper()} -- {dataset.upper()}', fontsize=18, fontweight='bold', pad=20)
     plt.tight_layout()
     plt.show()
     

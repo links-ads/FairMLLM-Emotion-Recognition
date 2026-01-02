@@ -19,7 +19,7 @@ class IEMOCAPFairnessAnnotator(FairnessAnnotator):
         key = entry.get('key', '')
         return {
             'gender': self._extract_gender_from_key(key),
-            'language': self.LANGUAGE,
+            'language': LANGUAGE,
         }
 
 if __name__ == "__main__":
