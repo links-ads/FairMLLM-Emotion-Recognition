@@ -66,6 +66,7 @@ def parse_args():
     parser.add_argument("--fold", type=int, default=1)
     parser.add_argument("--num_samples", type=int, default=None)
     parser.add_argument("--model", type=str, default="qwen2-audio-instruct")
+    parser.add_argument("--language", type=str, default=None)
     parser.add_argument("--temperature", type=float, default=-1)
     parser.add_argument("--top_p", type=float, default=-1)
     parser.add_argument("--output_dir", type=str, default="outputs/")
@@ -76,7 +77,7 @@ def main():
     
     print(f"Run {args.run_id} - Prompt: {args.prompt}")
     
-    test = EmoDataset(args.dataset, args.data_dir, args.meta_data_dir, fold=args.fold, split="test")
+    test = EmoDataset(args.dataset, args.data_dir, args.meta_data_dir, fold=args.fold, split="test", language=args.language)
     
     model = ModelFactory.create(
         name=args.model,
