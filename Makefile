@@ -62,7 +62,7 @@ run_thor_80:
 	srun --ntasks 1 --cpus-per-task 4 --mem=128GB --partition=A100 --gpus=a100:1 -t 36:00:00 --pty bash
 
 run_thor_40:
-	srun --ntasks 1 --cpus-per-task 4 --mem=128GB --partition=A100 --gpus=3g.40gb:1 -t 24:00:00 --pty bash
+	srun --ntasks 1 --cpus-per-task 4 --mem=128GB --partition=A100 --gpus=3g.40gb:1 -t 48:00:00 --pty bash
 
 run_thor_20:
 	srun --ntasks 1 --cpus-per-task 4 --mem=64GB --partition=A100 --gpus=1g.20gb:1 -t 24:00:00 --pty bash

@@ -1,132 +1,130 @@
-import os
-from tqdm import tqdm
-from collections import defaultdict
 import pandas as pd
-import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from utils.preprocess_utils import *
+from .base import FairnessAnnotator
 
-DATASET_NAME = "meld"
-SAMPLE_RATE = 48000
-
-
-def parse_filename(filename, df, dataset_type):
-    parts = filename.replace("final_videos_test", "").replace(".mp4", "").split("_")
-    dia_id = parts[0].replace("dia", "")
-    utt_id = parts[1].replace("utt", "")
-    row = df.loc[
-        (df["Dialogue_ID"] == int(dia_id)) & (df["Utterance_ID"] == int(utt_id))
-    ]
-    if row.empty:
-        print(f"File {filename} does not exist")
-        return
-    spk = row["Speaker"].values[0]
-    emotion = row["Emotion"].values[0]
-    transcript = row["Utterance"].values[0]
-    return {
-        "id": f"{filename.replace('.mp4', '')}-{dataset_type}",
-        "lang": "en",
-        "dia_id": dia_id,
-        "utt_id": utt_id,
-        "spk": spk.replace(" ", "-"),
-        "emotion": emotion,
-        "transcript": transcript.replace(" ", "-"),
+LANGUAGE = "English"
+SPEAKER_INFO = {
+    "Monica": {
+        "gender": "Female",
+        "age": 29
+    },
+    "Rachel": {
+        "gender": "Female",
+        "age": 24
+    },
+    "Phoebe": {
+        "gender": "Female",
+        "age": 30
+    },
+    "Ross": {
+        "gender": "Male",
+        "age": 26
+    },
+    "Joey": {
+        "gender": "Male",
+        "age": 26
+    },
+    "Chandler": {
+        "gender": "Male",
+        "age": 23
     }
+}
+
+UTTERANCES_TEST_INFO_FILE_PATH = "downloads/meld/test_sent_emo.csv"
+UTTERANCES_TRAIN_INFO_FILE_PATH = "downloads/meld/train_sent_emo.csv"
+UTTERANCES_DEV_INFO_FILE_PATH = "downloads/meld/dev_sent_emo.csv"
+
+class MELDFairnessAnnotator(FairnessAnnotator):
+    """Fairness preprocessor for MELD dataset."""
+    
+    def __init__(self):
+        super().__init__(dataset_name="meld", num_folds=1)
+        self.LANGUAGE = LANGUAGE
+        self.utterance_info = self._read_utterance_info_files()
+
+    def _read_utterance_info_files(self):
+        """
+        Reads the utterance info CSV files (train, dev, test) and returns a dictionary mapping utterance ID to the
+        utterance info. The files are composed of the following columns: 
+        
+        Sr No.,Utterance,Speaker,Emotion,Sentiment,Dialogue_ID,Utterance_ID,Season,Episode,StartTime,EndTime. 
+        
+        They are separated by ','. Since utterance id repeats accross different splits, we keep each split in a different dataframe.
+
+        Returns:
+            dict: A dictionary where keys are train, test, dev and values are dataframes with utterance info.
+        """
+
+        train_df = pd.read_csv(UTTERANCES_TRAIN_INFO_FILE_PATH)
+        dev_df = pd.read_csv(UTTERANCES_DEV_INFO_FILE_PATH)
+        test_df = pd.read_csv(UTTERANCES_TEST_INFO_FILE_PATH)
+        return {
+            'train': train_df,
+            'dev': dev_df,
+            'test': test_df
+        }
 
 
-def process_meld(
-    dataset_path, output_base_dir="data/meld", output_format: str | list = "jsonl"
-):
+    def _extract_gender_from_key(self, key: str) -> str:
+        """
+        Extract gender from MELD key (e.g., 'meld-dia1_utt0-test').
 
-    # Load dataframes
-    train_df = pd.read_csv(os.path.join(dataset_path, "train", "train_sent_emo.csv"))
-    dev_df = pd.read_csv(os.path.join(dataset_path, "dev_sent_emo.csv"))
-    test_df = pd.read_csv(os.path.join(dataset_path, "test_sent_emo.csv"))
+        Parameters:
+            key (str): The key string from which to extract gender.
 
-    # Create output directories
-    os.makedirs(output_base_dir, exist_ok=True)
-    data = {}
+        Returns:
+            str: The gender of the speaker ('Male' or 'Female').
+        """
+        sample_name = key.split('-')[1]  # e.g., dia1_utt0
+        split = key.split('-')[2]  # e.g., test
+        dialogue_full_id = sample_name.split('_')[0]  # e.g., dia1
+        utterance_id = sample_name.split('_')[1]  # e.g., utt0
+        dialog_id = int(dialogue_full_id.replace('dia', ''))
+        utt_id = int(utterance_id.replace('utt', ''))
+        df = self.utterance_info.get(split)
+        speaker = df[
+            (df['Dialogue_ID'] == dialog_id) & (df['Utterance_ID'] == utt_id)
+        ]['Speaker'].values[0]
+        return SPEAKER_INFO.get(speaker, {}).get('gender', 'Unknown')
 
-    progress_bar = tqdm(
-        total=len(train_df) + len(dev_df) + len(test_df), desc="Processing MELD"
-    )
+    def _extract_age_from_key(self, key: str) -> int:
+        """
+        Extract age from MELD key (e.g., 'meld-dia1_utt0-test'). Age is calculated as: 
+        age = season + base_age (Monica's age in season 1 is 30, 29 + 1)
 
-    # Process each dataset separately
-    for df, dataset_type, dataset_subpath in [
-        (train_df, "train", "train/train_splits"),
-        (dev_df, "dev", "dev_splits_complete"),
-        (test_df, "test", "output_repeated_splits_test"),
-    ]:
-        for _, row in df.iterrows():
-            filename = f"dia{row['Dialogue_ID']}_utt{row['Utterance_ID']}.mp4"
-            file_path = os.path.join(dataset_path, dataset_subpath, filename)
-            waveform, sample_rate = load_audio(file_path)
-            if waveform is None:
-                continue
+        Parameters:
+            key (str): The key string from which to extract age.
 
-            if sample_rate != SAMPLE_RATE:
-                print(f"Sample rate of {file_path} is not {SAMPLE_RATE}")
-            
-            sid = f"{DATASET_NAME}-dia{row['Dialogue_ID']}_utt{row['Utterance_ID']}-{dataset_type}"
-            metadata = parse_filename(filename, df, dataset_type)
-            if metadata:
-                data[sid] = {
-                    "audio": file_path,
-                    "emotion": metadata["emotion"],
-                    "sid": sid,
-                    "spk": metadata["spk"],
-                    "start_time": 0,
-                    "end_time": waveform.size(1) / sample_rate,
-                    "sample_rate": sample_rate,
-                    "duration": waveform.size(1) / sample_rate,
-                    "channel": 1 if waveform.size(0) == 2 else 3,
-                    "dset": dataset_type,
-                }
-            progress_bar.update(1)
-    progress_bar.close()
+        Returns:
+            int: The age of the speaker.
+        """
+        sample_name = key.split('-')[1]  # e.g., dia1_utt0
+        split = key.split('-')[2]  # e.g., test
+        dialogue_full_id = sample_name.split('_')[0]  # e.g., dia1
+        utterance_id = sample_name.split('_')[1]  # e.g., utt0
+        dialog_id = int(dialogue_full_id.replace('dia', ''))
+        utt_id = int(utterance_id.replace('utt', ''))
 
-    if output_format == "mini_format" or "mini_format" in output_format:
-        write_mini_format(data, output_base_dir)
-    if output_format == "jsonl" or "jsonl" in output_format:
-        # Handle single-file JSON or JSONL output for the entire dataset
-        jsonl_file_path = os.path.join(output_base_dir, "meld.jsonl")
-        write_jsonl(data, jsonl_file_path, "meld")
-    if output_format == "json" or "json" in output_format:
-        # Handle single-file JSON output for the entire dataset
-        json_file_path = os.path.join(output_base_dir, "meld.json")
-        write_json(data, json_file_path, "meld")
-    if output_format == "split" or "split" in output_format:
-        output_fold_dir = os.path.join(output_base_dir, f"fold_{1}")
-        os.makedirs(output_fold_dir, exist_ok=True)
-
-        train_data = {k: v for k, v in data.items() if v["dset"] == "train"}
-        valid = {k: v for k, v in data.items() if v["dset"] == "dev"}
-        test_data = {k: v for k, v in data.items() if v["dset"] == "test"}
-
-        write_jsonl(
-            train_data, os.path.join(output_fold_dir, "meld_train_fold_1.jsonl"), "meld"
-        )
-        write_jsonl(
-            valid, os.path.join(output_fold_dir, "meld_valid_fold_1.jsonl"), "meld"
-        )
-        write_jsonl(
-            test_data, os.path.join(output_fold_dir, "meld_test_fold_1.jsonl"), "meld"
-        )
-
-        write_json(
-            train_data, os.path.join(output_fold_dir, "meld_train_fold_1.json"), "meld"
-        )
-        write_json(
-            valid, os.path.join(output_fold_dir, "meld_valid_fold_1.json"), "meld"
-        )
-        write_json(
-            test_data, os.path.join(output_fold_dir, "meld_test_fold_1.json"), "meld"
-        )
-
+        df = self.utterance_info.get(split)
+        speaker = df[
+            (df['Dialogue_ID'] == dialog_id) & (df['Utterance_ID'] == utt_id)
+        ]['Speaker'].values[0]
+        season = int(df[
+            (df['Dialogue_ID'] == dialog_id) & (df['Utterance_ID'] == utt_id)
+        ]['Season'].values[0])
+        
+        base_age = SPEAKER_INFO.get(speaker, {}).get('age', 29)
+        return base_age + season
+    
+    def extract_sensitive_attributes(self, entry: dict) -> dict:
+        """Extract sensitive attributes for MELD."""
+        key = entry.get('key', '')
+        return {
+            'gender': self._extract_gender_from_key(key),
+            'age': self._extract_age_from_key(key),
+            'language': self.LANGUAGE,
+        }
 
 if __name__ == "__main__":
-    # Example usage
-    process_meld(
-        "downloads/meld", output_format=["mini_format", "jsonl", "json", "split"]
-    )
+    annotator = MELDFairnessAnnotator()
+    annotator.add_sensitive_attributes_to_all_folds()

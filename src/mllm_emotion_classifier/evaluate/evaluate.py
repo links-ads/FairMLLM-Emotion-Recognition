@@ -7,8 +7,13 @@ from datetime import datetime
 from .metrics import ClassificationMetrics
 from .statistics import Statistics
 from ..utils import quantile_binning
+from .fairness import FairnessMetrics
 
 
+DATASET2BINS = {
+    'crema-d': {'age': 4},
+    'meld': {'age': 3},
+}
 class Evaluator:
 
     def __init__(self, output_dir=None):
@@ -51,7 +56,8 @@ class Evaluator:
         # binning sensitive attributes if needed
         for attr_name, attr_values in sens_attr_dict.items():
             if attr_name.lower() in ['age']:
-                binned_values = quantile_binning(attr_values, n_bins=4)
+                n_bins = DATASET2BINS[dataloader.dataset.name][attr_name.lower()]
+                binned_values = quantile_binning(attr_values, n_bins=n_bins)
                 sens_attr_dict[attr_name] = binned_values
                 print(f"Binned sensitive attribute '{attr_name}' into quantile bins.")
                 
@@ -66,14 +72,12 @@ class Evaluator:
         # if sens_attr_dict is None:
         #     return metrics
         
-        # metrics['fairness'] = {}
-        # for attr_name, sens_attr_values in sens_attr_dict.items():
-        #     print(type(sens_attr_values))
-        #     print(type(sens_attr_values[0]))
-        #     self.fairness_obj = FairnessMetrics(
-        #         y_true, y_pred, attr_name, sens_attr_values
-        #     )
-        #     metrics['fairness'][attr_name] = self.fairness_obj.compute()
+        metrics['fairness'] = {}
+        for attr_name, sens_attr_values in sens_attr_dict.items():
+            self.fairness_obj = FairnessMetrics(
+                y_true, y_pred, attr_name, sens_attr_values
+            )
+            metrics['fairness'][attr_name] = self.fairness_obj.compute()
             
         return metrics
 

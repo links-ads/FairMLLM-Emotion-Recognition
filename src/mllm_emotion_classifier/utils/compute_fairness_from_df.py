@@ -15,6 +15,7 @@ def compute_fair_diff_row(
                       'global_accuracy_weighted'], "Invalid metric" # Negative Predictive Parity
 
     if metric == 'global_accuracy_weighted':
+        disparities = None
         pattern = f'{sensitive_attr}_([^_]+)_{metric}$'
         matching_cols = [col for col in row.index if re.match(pattern, col)]
         if len(matching_cols) >= 2:

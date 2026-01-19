@@ -6,7 +6,7 @@ CHAT_PROMPTS = {
         "user": "Classify the tone of the speaker in the preceding audio. Answer:"
     },
     "user_labels": {
-        "system": "You are a helpful assistant specialized in Speech Emotion Recognition.",
+        "system": "You are a highly capable assistant specialized in Speech Emotion Recognition",
         "user": "Classify the speaker's tone in the preceding audio. Options: {labels}. Answer:"
     },
     "direct": {

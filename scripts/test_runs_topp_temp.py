@@ -31,11 +31,12 @@ def run_single(args, fold, run_id, prompt):
         "--model", args.model,
         "--prompt", prompt,
         "--temperature", str(args.temperature),
-        "--language", str(args.language),
         "--top_p", str(args.top_p),
         "--run_id", str(run_id),
-        "--output_dir", "outputs/"]
-    
+        "--output_dir", args.output_dir,
+    ]
+    if args.language is not None:
+        cmd.extend(["--language", args.language])
     if args.num_samples:
         cmd.extend(["--num_samples", str(args.num_samples)])
     

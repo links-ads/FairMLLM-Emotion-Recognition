@@ -47,15 +47,16 @@ def plot_fairness_vs_hparam(
     for metric in fairness_metrics:
         mean_col = f'{metric}_mean'
         std_col = f'{metric}_std'
-        label = metric.replace('_', ' ').title()
+        base_metric = metric.replace(f'{sensitive_attr}_', '').replace(f'{sensitive_attr.lower()}_', '')
+        label = base_metric.replace('_', ' ').title()
         
-        ax.plot(grouped[hparam], grouped[mean_col], marker=markers[metric], linewidth=3, 
-                 markersize=10, label=label, color=colors[metric])
+        ax.plot(grouped[hparam], grouped[mean_col], marker=markers[base_metric], linewidth=3, 
+                 markersize=10, label=label, color=colors[base_metric])
         if show_std:
             ax.fill_between(grouped[hparam], 
                             grouped[mean_col] - grouped[std_col], 
                             grouped[mean_col] + grouped[std_col], 
-                            alpha=0.3, color=colors[metric])
+                            alpha=0.3, color=colors[base_metric])
     
     ax.set_xlabel(hparam.capitalize(), fontsize=18, fontweight='bold')
     ax.set_ylabel('Score', fontsize=18, fontweight='bold')
@@ -72,7 +73,7 @@ def plot_fairness_vs_hparam(
     if output_path is not None:
         fig.savefig(output_path, dpi=300)
 
-def plot_fairness_by_emotion(df, emotions, hparam, fairness_metric, model, dataset, fold, show_std=True):
+def plot_fairness_by_emotion(df, emotions, hparam, fairness_metric, model, dataset, fold, sensitive_attr=None, show_std=True):
     """
     Plot a specific fairness metric across emotions vs hyperparameter.
     
@@ -92,7 +93,7 @@ def plot_fairness_by_emotion(df, emotions, hparam, fairness_metric, model, datas
     
     agg_dict = {}
     for emotion in emotions:
-        col_name = f'{fairness_metric}_{emotion}'
+        col_name = f'{emotion}_{fairness_metric}' if sensitive_attr is None else f'{sensitive_attr}_{emotion}_{fairness_metric}'
         agg_dict[col_name] = ['mean', 'std']
     
     grouped = df.groupby(hparam).agg(agg_dict).reset_index()
@@ -102,8 +103,8 @@ def plot_fairness_by_emotion(df, emotions, hparam, fairness_metric, model, datas
     fig, ax = plt.subplots(figsize=(7.5, 5))
     
     for emotion in emotions:
-        mean_col = f'{fairness_metric}_{emotion}_mean'
-        std_col = f'{fairness_metric}_{emotion}_std'
+        mean_col = f'{fairness_metric}_{emotion}_mean' if sensitive_attr is None else f'{sensitive_attr}_{emotion}_{fairness_metric}_mean'
+        std_col = f'{fairness_metric}_{emotion}_std' if sensitive_attr is None else f'{sensitive_attr}_{emotion}_{fairness_metric}_std'
         
         ax.plot(grouped[hparam], grouped[mean_col], marker=markers[emotion], linewidth=3, 
                 markersize=10, label=emotion, color=colors[emotion])

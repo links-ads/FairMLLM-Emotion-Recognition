@@ -10,8 +10,15 @@ class FairnessMetrics(object):
             sens_attr_values: np.ndarray,
         ):
 
-        unique_classes = sorted(set(targets))
-        class_to_idx = {cls: idx for idx, cls in enumerate(unique_classes)}
+        valid_mask = predictions != "Unknown"
+        targets = targets[valid_mask]
+        predictions = predictions[valid_mask]
+        sens_attr_values = sens_attr_values[valid_mask]
+        if len(targets) == 0:
+            raise ValueError("Fairness - No valid predictions after filtering 'Unknown'")
+
+        self.unique_classes = sorted(set(targets))
+        class_to_idx = {cls: idx for idx, cls in enumerate(self.unique_classes)}
         
         unique_sens = sorted(set(sens_attr_values))
         sens_to_idx = {s: idx for idx, s in enumerate(unique_sens)}
@@ -21,7 +28,7 @@ class FairnessMetrics(object):
         self.sens_attr = sens_attr
         self.sens_attr_values = np.array([sens_to_idx[s] for s in sens_attr_values])
 
-        self.class_range = list(range(len(unique_classes)))
+        self.class_range = list(range(len(self.unique_classes)))
         self.y_hat = []
         self.yneq_hat = []
         for y_hat_idx in self.class_range:
@@ -143,11 +150,73 @@ class FairnessMetrics(object):
                     te[y_hat_idx].append(te_fn_fp[y_hat_idx][s_idx])
         return te
     
+
     def compute(self):
-        fairness_metrics = {
-            'statistical_parity': self.statistical_parity(),
-            'equal_opportunity': self.equal_opportunity(),
-            'overall_accuracy_equality': self.overall_accuracy_equality(),
-            'treatment_equality': self.treatment_equality(),
-        }
-        return fairness_metrics
+        """
+        Returns a flattened dictionary with keys in the format:
+        {sens_attr}_{emotion}_{metric_name}
+        
+        For each emotion and metric, computes the mean absolute difference
+        among all pairwise combinations of sensitive attribute values.
+        Also computes the mean across all emotions for each metric.
+        
+        For example:
+        - gender_emotion0_statistical_parity: mean(|P(y^=0|s=0) - P(y^=0|s=1)|, ...)
+        - gender_mean_statistical_parity: mean over all emotions
+        """
+        sp = self.statistical_parity()
+        eo = self.equal_opportunity()
+        oae = self.overall_accuracy_equality()
+        # te = self.treatment_equality()
+        
+        fairness_dict = {}
+        
+        # Statistical Parity: for each emotion, compute mean absolute difference
+        sp_values = []
+        for emotion_idx in self.class_range:
+            emotion_label = self.unique_classes[emotion_idx]
+            probs = [sp[emotion_idx][sens_idx] for sens_idx in self.sens_attr_range]
+            abs_diffs = []
+            for i in range(len(probs)):
+                for j in range(i + 1, len(probs)):
+                    abs_diffs.append(abs(probs[i] - probs[j]))
+            
+            mean_abs_diff = np.mean(abs_diffs) if abs_diffs else 0.0
+            key = f"{emotion_label}_statistical_parity"
+            fairness_dict[key] = mean_abs_diff
+            sp_values.append(mean_abs_diff)
+        fairness_dict["statistical_parity"] = np.mean(sp_values) if sp_values else 0.0
+        
+        # Equal Opportunity: for each emotion
+        eo_values = []
+        for emotion_idx in self.class_range:
+            emotion_label = self.unique_classes[emotion_idx]
+            probs = [eo[emotion_idx][sens_idx] for sens_idx in self.sens_attr_range]
+            probs = [p for p in probs if p is not None]
+            
+            abs_diffs = []
+            for i in range(len(probs)):
+                for j in range(i + 1, len(probs)):
+                    abs_diffs.append(abs(probs[i] - probs[j]))
+            
+            mean_abs_diff = np.mean(abs_diffs) if abs_diffs else None
+            key = f"{emotion_label}_equal_opportunity"
+            fairness_dict[key] = mean_abs_diff
+            if mean_abs_diff is not None:
+                eo_values.append(mean_abs_diff)
+        fairness_dict["equal_opportunity"] = np.mean(eo_values) if eo_values else None
+        
+        # Overall Accuracy Equality (already a single value across emotions)
+        probs = [oae[sens_idx] for sens_idx in self.sens_attr_range]
+        probs = [p for p in probs if p is not None]
+        
+        abs_diffs = []
+        for i in range(len(probs)):
+            for j in range(i + 1, len(probs)):
+                abs_diffs.append(abs(probs[i] - probs[j]))
+        
+        mean_abs_diff = np.mean(abs_diffs) if abs_diffs else None
+        key = "overall_accuracy_equality"
+        fairness_dict[key] = mean_abs_diff
+        
+        return fairness_dict

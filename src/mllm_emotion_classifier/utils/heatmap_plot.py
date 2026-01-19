@@ -62,7 +62,11 @@ def plot_classwise_heatmap(df, top_p, emotions, attribute, attribute_values, tem
     formatted_values = [value.replace(' ', '\n') for value in attribute_values]
     formatted_emotions = [emotion.replace(' ', '\n') for emotion in emotions_list]
     
-    ax.set_xticklabels(formatted_values, fontsize=17, fontweight='bold', rotation=45)
+    if attribute in ['gender']:
+        ax.set_xticklabels(formatted_values, fontsize=17, fontweight='bold')
+    else:
+        ax.set_xticklabels(formatted_values, fontsize=17, fontweight='bold', rotation=45)
+        
     ax.set_yticklabels(formatted_emotions, fontsize=17, fontweight='bold')
     
     # Position x-axis labels at top

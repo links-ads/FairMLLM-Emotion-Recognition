@@ -24,9 +24,11 @@ def test_run(model, test_dataset, num_samples=None):
     
     results = evaluator.results
     metrics = flatten_dict(results['metrics'])
+    fairness = flatten_dict(results['fairness'])
     return {
         'valid_rate': results['valid_rate'],
-        **metrics
+        **metrics,
+        **fairness,
     }
 
 def save_csv(args, metrics, output_file):

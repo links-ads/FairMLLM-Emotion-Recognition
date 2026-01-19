@@ -7,6 +7,7 @@ from typing import List, Union
 from .base import BaseEmotionModel
 from transformers import AudioFlamingo3ForConditionalGeneration, AutoProcessor, set_seed
 from .prompts.chat_flamingo import build_conversation
+from .postprocess import postprocess_ser_response
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,9 @@ class AudioFlamingo3EmotionWrapper(BaseEmotionModel):
         torch_dtype: str = 'auto',
         max_new_tokens: int = 5,
         min_new_tokens: int = 1,
-        do_sample: bool = False,
+        temperature: float = 1.0,
+        top_p: float = 1.0,
+        do_sample: bool = True,
         class_labels = None,
         prompt_name: str = "user_labels",
         device: str = "cuda",
@@ -40,7 +43,8 @@ class AudioFlamingo3EmotionWrapper(BaseEmotionModel):
         self.min_new_tokens = min_new_tokens
         self.do_sample = do_sample
         self.device = device
-
+        self.temperature = temperature
+        self.top_p = top_p
         self.processor = AutoProcessor.from_pretrained(self.checkpoint)
         self.model = AudioFlamingo3ForConditionalGeneration.from_pretrained(
             self.checkpoint,
@@ -49,6 +53,7 @@ class AudioFlamingo3EmotionWrapper(BaseEmotionModel):
             torch_dtype=self.torch_dtype
         )
         self.model.eval()
+        # self.model.to(self.device)
 
         self.class_labels = list(class_labels) if class_labels is not None else DEFAULT_EMOTIONS
         self.letter_to_label = {label[0].upper(): label for label in self.class_labels}
@@ -76,9 +81,9 @@ class AudioFlamingo3EmotionWrapper(BaseEmotionModel):
             audio=input_audios,
             return_tensors="pt",
             tokenize=True,
-            add_generation_prompt=True,
-            return_dict=True,
-        ).to(self.model.device)
+            # add_generation_prompt=True,
+            # return_dict=True,
+        )  # Remove .to(self.model.device) - tensors will be moved in evaluation loop
         
         return processed_inputs, labels
     
@@ -95,31 +100,6 @@ class AudioFlamingo3EmotionWrapper(BaseEmotionModel):
         )
         return outputs
 
-    def _parse_emotion_response(self, responses: List[str]) -> List[str]:
-        parsed_emotions = []
-        
-        for response in responses:
-            response = response.strip()
-            found_label = None
-            
-            for label in self.class_labels:
-                if label.lower() in response.lower():
-                    found_label = label
-                    break
-            
-            if found_label is None:
-                for letter, label in self.letter_to_label.items():
-                    if letter == response.upper():
-                        found_label = label
-                        break
-            
-            if found_label is None: 
-                logger.warning(f'Could not parse response: "{response}"')
-            
-            parsed_emotions.append(found_label)
-        
-        return parsed_emotions
-
     def predict(self, inputs: dict) -> List[Union[str, None]]:
         set_seed(self.seed)
         
@@ -129,9 +109,14 @@ class AudioFlamingo3EmotionWrapper(BaseEmotionModel):
                 max_new_tokens=self.max_new_tokens,
                 min_new_tokens=self.min_new_tokens,
                 do_sample=self.do_sample,
+                temperature=self.temperature,
+                top_p=self.top_p,
             )
         outputs = self._decode_outputs(inputs['input_ids'], output_ids)
-        predictions = self._parse_emotion_response(outputs)
+        predictions = postprocess_ser_response(
+            class_labels=self.class_labels,
+            model_responses=outputs,
+        )
         return predictions
 
     def forward(self, inputs: dict):
