@@ -1,0 +1,49 @@
+IEMOCAP - qwen2-audio-instruct
+temperature: 0.0001
+global_f1_macro: 69.6 ± 7.65
+global_accuracy_unweighted: 73.22 ± 3.29
+gender_statistical_parity: 10.15 ± 3.04
+gender_equal_opportunity: 10.78 ± 4.71
+gender_overall_accuracy_equality: 15.25 ± 8.39
+
+MELD - qwen2-audio-instruct
+temperature: 0.0001
+global_f1_macro: 26.84 ± 2.02
+global_accuracy_unweighted: 36.32 ± 1.69
+gender_statistical_parity: 4.22 ± 0.73
+gender_equal_opportunity: 8.81 ± 2.11
+gender_overall_accuracy_equality: 13.58 ± 11.28
+
+CREMAD - qwen2-audio-instruct
+temperature: 0.0001
+global_f1_macro: 74.93 ± 2.98
+global_accuracy_unweighted: 75.45 ± 2.79
+gender_statistical_parity: 2.91 ± 0.78
+gender_equal_opportunity: 7.13 ± 1.68
+gender_overall_accuracy_equality: 11.28 ± 8.39
+age_statistical_parity: 1.85 ± 0.18
+age_equal_opportunity: 4.86 ± 0.31
+age_overall_accuracy_equality: 13.47 ± 3.33
+ethnicity_statistical_parity: 1.78 ± 0.37
+ethnicity_equal_opportunity: 5.88 ± 1.45
+ethnicity_overall_accuracy_equality: 7.89 ± 4.73
+race_statistical_parity: 4.46 ± 0.58
+race_equal_opportunity: 13.3 ± 0.96
+race_overall_accuracy_equality: 48.49 ± 10.69
+
+RAVDESS - qwen2-audio-instruct
+temperature: 0.0001
+global_f1_macro: 68.11 ± 4.27
+global_accuracy_unweighted: 73.38 ± 4.41
+gender_statistical_parity: 2.31 ± 1.34
+gender_equal_opportunity: 11.78 ± 3.53
+gender_overall_accuracy_equality: 47.67 ± 32.44
+
+EMOVDB - qwen2-audio-instruct
+temperature: 0.0001
+global_f1_macro: 67.53 ± 1.05
+global_accuracy_unweighted: 81.73 ± 0.96
+gender_statistical_parity: 4.68 ± 0.44
+gender_equal_opportunity: 6.62 ± 1.55
+gender_overall_accuracy_equality: 33.08 ± 7.73
+

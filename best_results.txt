@@ -1,0 +1,196 @@
+IEMOCAP - qwen2-audio-instruct
+temperature: 0.3
+global_f1_macro: 70.42 ± 6.75
+global_accuracy_unweighted: 73.41 ± 3.06
+gender_statistical_parity: 9.84 ± 2.88
+gender_equal_opportunity: 9.92 ± 4.03
+gender_overall_accuracy_equality: 14.54 ± 7.83
+
+IEMOCAP - audio-flamingo-3
+temperature: 0.0001
+global_f1_macro: 46.95 ± 2.38
+global_accuracy_unweighted: 56.58 ± 2.15
+gender_statistical_parity: 7.37 ± 2.52
+gender_equal_opportunity: 7.58 ± 2.01
+gender_overall_accuracy_equality: 17.05 ± 11.29
+
+IEMOCAP - voxtral-mini
+temperature: 0.0001
+global_f1_macro: 30.21 ± 2.42
+global_accuracy_unweighted: 37.49 ± 2.01
+gender_statistical_parity: 3.32 ± 0.74
+gender_equal_opportunity: 5.12 ± 1.56
+gender_overall_accuracy_equality: 12.92 ± 7.46
+
+IEMOCAP - salmonn-7b
+temperature: 1.0
+global_f1_macro: 31.33 ± 6.12
+global_accuracy_unweighted: 37.53 ± 5.34
+gender_statistical_parity: 4.77 ± 3.0
+gender_equal_opportunity: 7.43 ± 3.62
+gender_overall_accuracy_equality: 21.6 ± 15.36
+
+MELD - qwen2-audio-instruct
+temperature: 0.0001
+global_f1_macro: 28.11 ± 2.07
+global_accuracy_unweighted: 37.31 ± 1.7
+gender_statistical_parity: 4.89 ± 0.69
+gender_equal_opportunity: 9.93 ± 2.09
+gender_overall_accuracy_equality: 19.27 ± 11.42
+
+MELD - audio-flamingo-3
+temperature: 0.0001
+global_f1_macro: 20.03 ± 1.22
+global_accuracy_unweighted: 23.06 ± 0.71
+gender_statistical_parity: 2.84 ± 0.23
+gender_equal_opportunity: 5.54 ± 0.75
+gender_overall_accuracy_equality: 18.16 ± 5.89
+
+MELD - voxtral-mini
+temperature: 0.0001
+global_f1_macro: 24.75 ± 3.31
+global_accuracy_unweighted: 25.29 ± 2.98
+gender_statistical_parity: 2.43 ± 0.41
+gender_equal_opportunity: 6.0 ± 1.54
+gender_overall_accuracy_equality: 34.05 ± 10.34
+
+MELD - salmonn-7b
+temperature: 1.0
+global_f1_macro: 7.23 ± 1.73
+global_accuracy_unweighted: 17.01 ± 1.72
+gender_statistical_parity: 0.74 ± 0.24
+gender_equal_opportunity: 2.03 ± 1.14
+gender_overall_accuracy_equality: 8.44 ± 7.99
+
+CREMAD - qwen2-audio-instruct
+temperature: 0.0001
+global_f1_macro: 76.56 ± 2.21
+global_accuracy_unweighted: 76.84 ± 1.92
+gender_statistical_parity: 3.12 ± 0.91
+gender_equal_opportunity: 7.8 ± 1.96
+gender_overall_accuracy_equality: 10.18 ± 6.15
+age_statistical_parity: 1.92 ± 0.14
+age_equal_opportunity: 5.01 ± 0.51
+age_overall_accuracy_equality: 15.62 ± 3.98
+ethnicity_statistical_parity: 1.95 ± 0.36
+ethnicity_equal_opportunity: 6.54 ± 1.3
+ethnicity_overall_accuracy_equality: 8.19 ± 5.82
+race_statistical_parity: 4.39 ± 0.38
+race_equal_opportunity: 13.88 ± 1.52
+race_overall_accuracy_equality: 43.97 ± 13.46
+
+CREMAD - audio-flamingo-3
+temperature: 0.3
+global_f1_macro: 61.0 ± 2.8
+global_accuracy_unweighted: 61.3 ± 1.59
+gender_statistical_parity: 1.1 ± 0.25
+gender_equal_opportunity: 4.22 ± 0.76
+gender_overall_accuracy_equality: 14.01 ± 4.34
+age_statistical_parity: 1.55 ± 0.16
+age_equal_opportunity: 5.95 ± 0.43
+age_overall_accuracy_equality: 6.69 ± 3.09
+ethnicity_statistical_parity: 1.68 ± 0.41
+ethnicity_equal_opportunity: 3.58 ± 0.94
+ethnicity_overall_accuracy_equality: 8.78 ± 4.75
+race_statistical_parity: 4.54 ± 0.36
+race_equal_opportunity: 17.48 ± 1.02
+race_overall_accuracy_equality: 26.69 ± 7.28
+
+CREMAD - voxtral-mini
+temperature: 1.5
+global_f1_macro: 6.02 ± 0.64
+global_accuracy_unweighted: 9.3 ± 0.71
+gender_statistical_parity: 0.9 ± 0.34
+gender_equal_opportunity: 2.27 ± 0.65
+gender_overall_accuracy_equality: 5.21 ± 4.15
+age_statistical_parity: 2.17 ± 0.57
+age_equal_opportunity: 4.05 ± 1.31
+age_overall_accuracy_equality: 13.68 ± 6.84
+ethnicity_statistical_parity: 1.25 ± 0.59
+ethnicity_equal_opportunity: 2.78 ± 0.81
+ethnicity_overall_accuracy_equality: 9.43 ± 7.33
+race_statistical_parity: 2.46 ± 0.95
+race_equal_opportunity: 5.22 ± 2.26
+race_overall_accuracy_equality: 18.91 ± 18.31
+
+CREMAD - salmonn-7b
+temperature: 1.0
+global_f1_macro: 7.79 ± 3.07
+global_accuracy_unweighted: 18.19 ± 1.57
+gender_statistical_parity: 0.62 ± 0.49
+gender_equal_opportunity: 1.05 ± 0.8
+gender_overall_accuracy_equality: 4.09 ± 4.55
+age_statistical_parity: 0.76 ± 0.76
+age_equal_opportunity: 1.97 ± 1.86
+age_overall_accuracy_equality: 5.9 ± 4.66
+ethnicity_statistical_parity: 0.71 ± 0.63
+ethnicity_equal_opportunity: 1.91 ± 1.75
+ethnicity_overall_accuracy_equality: 3.33 ± 3.47
+race_statistical_parity: 1.35 ± 1.44
+race_equal_opportunity: 2.48 ± 2.77
+race_overall_accuracy_equality: 9.43 ± 13.42
+
+RAVDESS - qwen2-audio-instruct
+temperature: 0.0001
+global_f1_macro: 67.48 ± 5.34
+global_accuracy_unweighted: 72.7 ± 5.37
+gender_statistical_parity: 2.3 ± 1.4
+gender_equal_opportunity: 12.39 ± 4.38
+gender_overall_accuracy_equality: 46.58 ± 35.27
+
+RAVDESS - audio-flamingo-3
+temperature: 0.0001
+global_f1_macro: 25.94 ± 3.34
+global_accuracy_unweighted: 30.21 ± 2.37
+gender_statistical_parity: 2.87 ± 1.7
+gender_equal_opportunity: 15.57 ± 4.02
+gender_overall_accuracy_equality: 33.53 ± 24.85
+
+RAVDESS - voxtral-mini
+temperature: 0.0001
+global_f1_macro: 4.71 ± 1.78
+global_accuracy_unweighted: 14.16 ± 1.54
+gender_statistical_parity: 1.89 ± 2.23
+gender_equal_opportunity: 4.27 ± 3.82
+gender_overall_accuracy_equality: 20.17 ± 18.41
+
+RAVDESS - salmonn-7b
+temperature: 1.0
+global_f1_macro: 3.99 ± 1.98
+global_accuracy_unweighted: 13.16 ± 1.07
+gender_statistical_parity: 0.74 ± 1.28
+gender_equal_opportunity: 1.23 ± 1.76
+gender_overall_accuracy_equality: 6.67 ± 9.9
+
+EMOVDB - qwen2-audio-instruct
+temperature: 0.3
+global_f1_macro: 69.64 ± 1.54
+global_accuracy_unweighted: 84.45 ± 1.44
+gender_statistical_parity: 4.93 ± 0.44
+gender_equal_opportunity: 7.39 ± 0.76
+gender_overall_accuracy_equality: 36.96 ± 3.78
+
+EMOVDB - audio-flamingo-3
+temperature: 0.7
+global_f1_macro: 83.85 ± 0.81
+global_accuracy_unweighted: 82.97 ± 1.03
+gender_statistical_parity: 4.79 ± 0.26
+gender_equal_opportunity: 5.02 ± 0.68
+gender_overall_accuracy_equality: 5.24 ± 4.13
+
+EMOVDB - voxtral-mini
+temperature: 0.0001
+global_f1_macro: 10.79 ± 0.97
+global_accuracy_unweighted: 21.28 ± 0.6
+gender_statistical_parity: 0.76 ± 0.48
+gender_equal_opportunity: 1.41 ± 0.41
+gender_overall_accuracy_equality: 2.17 ± 1.63
+
+EMOVDB - salmonn-7b
+temperature: 1.0
+global_f1_macro: 15.69 ± 6.24
+global_accuracy_unweighted: 24.22 ± 3.14
+gender_statistical_parity: 1.33 ± 1.07
+gender_equal_opportunity: 4.59 ± 4.28
+gender_overall_accuracy_equality: 7.89 ± 6.27
+

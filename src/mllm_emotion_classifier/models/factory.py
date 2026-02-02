@@ -11,8 +11,10 @@ try:
     from .voxtral import VoxtralEmotionWrapper
 except:
     pass
-
-from .salmonn import SALMONNEmotionWrapper
+try:
+    from .salmonn import SALMONNEmotionWrapper
+except:
+    pass
 
 from .base import BaseEmotionModel
 

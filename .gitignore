@@ -158,6 +158,8 @@ cython_debug/
 jobs/
 log/
 outputs-2/
+outputs-3/
+outputs/
 .kimi_venv/
 .voxtral_env/
 .salmonn_env/

@@ -71,6 +71,7 @@ def parse_args():
     parser.add_argument("--model", type=str, default="qwen2-audio-instruct")
     parser.add_argument("--language", type=str, default=None)
     parser.add_argument("--temperature", type=float, default=-1)
+    parser.add_argument("--use_levenshtein", type=bool, default=True)
     parser.add_argument("--top_p", type=float, default=-1)
     parser.add_argument("--output_dir", type=str, default="outputs/")
     return parser.parse_args()
@@ -96,6 +97,7 @@ def main():
         prompt_name=args.prompt,
         temperature=float(args.temperature) if float(args.temperature) != -1.0 else 1.0,
         top_p=float(args.top_p) if float(args.top_p) != -1.0 else 1.0,
+        use_levenshtein=args.use_levenshtein,
         device=device,
     )
     

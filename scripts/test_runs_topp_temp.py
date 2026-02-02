@@ -17,6 +17,7 @@ def parse_args():
     parser.add_argument("--audio_format", type=str, default="array")
     parser.add_argument("--model", type=str, default="qwen2-audio-instruct")
     parser.add_argument("--temperature", type=float, default=-1)
+    parser.add_argument("--use_levenshtein", type=bool, default=True)
     parser.add_argument("--top_p", type=float, default=-1)
     parser.add_argument("--runs", type=int, default=10)
     parser.add_argument("--prompt", nargs='+', type=str, default=["simple", "task"])
@@ -33,6 +34,7 @@ def run_single(args, fold, run_id, prompt):
         "--model", args.model,
         "--prompt", prompt,
         "--temperature", str(args.temperature),
+        "--use_levenshtein", str(args.use_levenshtein),
         "--top_p", str(args.top_p),
         "--run_id", str(run_id),
         "--output_dir", args.output_dir,

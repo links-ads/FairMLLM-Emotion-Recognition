@@ -29,6 +29,7 @@ class Qwen2AudioInstructEmotionWrapper(BaseEmotionModel):
         do_sample: bool = True,
         class_labels = None,
         prompt_name: str = "user_labels",
+        use_levenshtein=True,
         device: str = "cuda",
         seed: int = 42,
         **kwargs,
@@ -45,6 +46,7 @@ class Qwen2AudioInstructEmotionWrapper(BaseEmotionModel):
         self.min_new_tokens = min_new_tokens
         self.do_sample = do_sample
         self.temperature = temperature
+        self.use_levenshtein = use_levenshtein
         self.top_p = top_p
         self.device = device
 
@@ -104,6 +106,8 @@ class Qwen2AudioInstructEmotionWrapper(BaseEmotionModel):
 
     def predict(self, inputs: dict) -> List[Union[str, int]]:
         set_seed(self.seed)
+
+        inputs = {key: val.to(self.device) if isinstance(val, torch.Tensor) else val for key, val in inputs.items()}
         
         with torch.no_grad():
             output_ids = self.model.generate(
@@ -116,11 +120,13 @@ class Qwen2AudioInstructEmotionWrapper(BaseEmotionModel):
             )
         
         outputs = self._decode_outputs(inputs['input_ids'], output_ids)
-        predictions = postprocess_ser_response(
-            class_labels=self.class_labels,
-            model_responses=outputs,
-        )
-        # predictions = self._parse_emotion_response(outputs)
+        if self.use_levenshtein:
+            predictions = postprocess_ser_response(
+                class_labels=self.class_labels,
+                model_responses=outputs,
+            )
+        else:
+            predictions = outputs
         return predictions
 
     def forward(self, inputs: dict) -> Qwen2AudioCausalLMOutputWithPast:
