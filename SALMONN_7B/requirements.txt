@@ -1,0 +1,13 @@
+# python 3.9.17
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+peft==0.3.0
+soundfile 
+librosa
+transformers==4.30.2
+sentencepiece==0.1.97
+accelerate==0.20.3
+bitsandbytes==0.43.0
+gradio==3.23.0
+
+# torch==2.0.1
+# torchaudio==2.0.2

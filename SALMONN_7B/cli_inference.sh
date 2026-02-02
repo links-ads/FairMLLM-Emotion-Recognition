@@ -1,0 +1,1 @@
+python3 SALMONN_7B/cli_inference.py --ckpt_path SALMONN_7B/salmonn_7b_v0.pth --whisper_path openai/whisper-large-v2 --beats_path SALMONN_7B/BEATs_iter3_plus_AS2M_finetuned_on_AS2M_cpt2.pt --vicuna_path lmsys/vicuna-7b-v1.5 --low_resource --lora_alpha 28
