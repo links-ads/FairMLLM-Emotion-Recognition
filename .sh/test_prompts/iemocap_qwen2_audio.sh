@@ -1,1 +1,0 @@
-python scripts/test_runs.py --dataset iemocap --model qwen2-audio --prompt simple task --runs 5

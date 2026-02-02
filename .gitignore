@@ -155,6 +155,7 @@ cython_debug/
 # IDE and editors
 .idea/
 .vscode/
+.sh_/
 jobs/
 log/
 outputs-2/

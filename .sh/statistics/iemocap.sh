@@ -1,1 +1,0 @@
-python scripts/compute_statistics.py --dataset iemocap

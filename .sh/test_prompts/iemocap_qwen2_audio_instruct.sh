@@ -1,1 +1,0 @@
-python scripts/test_runs.py --dataset iemocap --model qwen2-audio-instruct --prompt system_labels user_labels direct --runs 5
